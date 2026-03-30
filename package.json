@@ -1,0 +1,15 @@
+{
+  "name": "z-mono",
+  "private": true,
+  "packageManager": "pnpm@10.17.0",
+  "scripts": {
+    "dev": "corepack pnpm exec turbo run dev",
+    "dev:main": "corepack pnpm --filter web-main dev",
+    "build": "corepack pnpm exec turbo run build",
+    "start": "corepack pnpm exec turbo run start",
+    "lint": "corepack pnpm exec turbo run lint"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0"
+  }
+}

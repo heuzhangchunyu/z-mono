@@ -1,0 +1,24 @@
+{
+  "name": "@z-mono/infinite-canvas",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./styles.less": "./dist/styles.less"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "konva": "^9.3.22",
+    "react-konva": "^18.2.10"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "scripts": {
+    "build": "mkdir -p dist/core dist/hooks dist/utils && cp src/index.js dist/index.js && cp src/InfiniteCanvas.jsx dist/InfiniteCanvas.jsx && cp src/styles.less dist/styles.less && cp src/core/viewport.js dist/core/viewport.js && cp src/hooks/useInfiniteCanvas.js dist/hooks/useInfiniteCanvas.js && cp src/utils/constants.js dist/utils/constants.js"
+  }
+}

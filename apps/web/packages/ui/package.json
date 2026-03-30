@@ -1,0 +1,19 @@
+{
+  "name": "@z-mono/ui",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./styles.less": "./dist/styles.less"
+  },
+  "files": [
+    "dist"
+  ],
+  "peerDependencies": {
+    "react": "^18.3.1"
+  },
+  "scripts": {
+    "build": "mkdir -p dist && cp src/index.js dist/index.js && cp src/FeatureCard.jsx dist/FeatureCard.jsx && cp src/StatusPanel.jsx dist/StatusPanel.jsx && cp src/styles.less dist/styles.less"
+  }
+}
