@@ -5,11 +5,23 @@
   "scripts": {
     "dev": "corepack pnpm exec turbo run dev",
     "dev:main": "corepack pnpm --filter web-main dev",
+    "dev:conote:frontend": "corepack pnpm --filter conote-frontend dev",
+    "dev:conote:backend": "corepack pnpm --filter conote-backend dev",
+    "dev:zmeng:frontend": "corepack pnpm --filter z-meng-frontend dev",
+    "dev:zmeng:backend": "corepack pnpm --filter z-meng-backend dev",
+    "dev:server": "corepack pnpm --filter server-main dev",
     "build": "corepack pnpm exec turbo run build",
     "start": "corepack pnpm exec turbo run start",
     "lint": "corepack pnpm exec turbo run lint"
   },
   "devDependencies": {
-    "turbo": "^2.5.0"
+    "@types/koa": "^2.15.0",
+    "@types/koa__cors": "^5.0.0",
+    "@types/node": "^22.10.1",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "tsx": "^4.19.2",
+    "turbo": "^2.5.0",
+    "typescript": "^5.6.3"
   }
 }

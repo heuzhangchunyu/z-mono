@@ -1,0 +1,23 @@
+{
+  "name": "z-meng-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 3002",
+    "build": "corepack pnpm exec tsc -p tsconfig.json && vite build",
+    "preview": "vite preview --port 4002"
+  },
+  "dependencies": {
+    "antd": "^5.29.3",
+    "axios": "^1.8.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.30.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "less": "^4.2.1",
+    "vite": "^5.4.19"
+  }
+}

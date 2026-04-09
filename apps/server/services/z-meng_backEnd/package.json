@@ -1,0 +1,25 @@
+{
+  "name": "z-meng-backend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "corepack pnpm exec tsx watch src/index.ts",
+    "migrations": "corepack pnpm exec tsx src/pkg/migrate/genmig.ts --outdir src/internal/data/migrations/autogen src/internal/data/migrations",
+    "migdown": "corepack pnpm exec tsx src/cmd/migdown.ts",
+    "start": "node dist/index.js",
+    "build": "rm -rf dist && corepack pnpm exec tsc -p tsconfig.json && mkdir -p dist/internal/data/migrations/autogen && cp src/internal/data/migrations/autogen/*.sql dist/internal/data/migrations/autogen/"
+  },
+  "dependencies": {
+    "@koa/cors": "^5.0.0",
+    "axios": "^1.8.4",
+    "koa": "^2.16.1",
+    "koa-router": "^14.0.0",
+    "pg": "^8.16.3",
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "@types/koa-router": "^7.4.8",
+    "@types/pg": "^8.15.6"
+  }
+}

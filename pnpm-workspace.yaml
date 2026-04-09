@@ -1,4 +1,4 @@
 packages:
-  - apps/server
+  - apps/server/services/*
   - apps/web/app/*
   - apps/web/packages/*

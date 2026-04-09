@@ -1,0 +1,26 @@
+.zmeng-home-shell.ant-layout {
+  height: 100vh;
+  min-width: 1180px;
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr);
+  align-items: stretch;
+  gap: 24px;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top left, rgba(45, 212, 191, 0.18), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(96, 165, 250, 0.16), transparent 26%),
+    linear-gradient(180deg, #07111f 0%, #0c1629 100%);
+}
+
+.zmeng-home-shell__content {
+  grid-column: 2;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: stretch;
+  overflow: hidden;
+}

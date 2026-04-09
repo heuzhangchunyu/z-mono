@@ -1,0 +1,14 @@
+.git
+.DS_Store
+node_modules
+**/node_modules
+.turbo
+**/.turbo
+dist
+**/dist
+coverage
+examples
+apps/web
+apps/web/packages
+apps/server/services/main
+apps/server/services/coNote_backEnd

@@ -1,0 +1,127 @@
+.zmeng-sidebar.ant-layout-sider {
+  background: rgba(6, 13, 24, 0.92) !important;
+  border: 1px solid var(--panel-line);
+  border-right: 1px solid var(--panel-line) !important;
+  border-radius: 32px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 24px 60px rgba(0, 0, 0, 0.26);
+}
+
+.zmeng-sidebar .ant-layout-sider-children {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  padding: 24px 14px;
+}
+
+.zmeng-sidebar__brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.zmeng-sidebar__logo {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(45, 212, 191, 0.92), rgba(96, 165, 250, 0.96));
+  color: #03111a;
+  font-size: 1.5rem;
+  font-weight: 800;
+  text-transform: lowercase;
+  box-shadow: 0 18px 32px rgba(7, 17, 31, 0.32);
+}
+
+.zmeng-sidebar__brand-text.ant-typography {
+  color: #d8e7fb;
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.zmeng-sidebar__menu.ant-menu {
+  flex: 1;
+  border-inline-end: 0;
+  border-right: 0 !important;
+  background: transparent;
+  color: var(--text-soft);
+  box-shadow: none !important;
+  width: 100%;
+}
+
+.zmeng-sidebar__menu.ant-menu .ant-menu-item {
+  height: 88px;
+  min-height: 88px;
+  margin-inline: 0;
+  margin-block: 10px;
+  width: 100%;
+  border-radius: 22px;
+  display: flex;
+  justify-content: center !important;
+  align-items: center;
+  padding-inline: 0 !important;
+  padding-block: 0 !important;
+  text-align: center !important;
+  line-height: 1 !important;
+}
+
+.zmeng-sidebar__menu.ant-menu .ant-menu-title-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  margin-inline-start: 0 !important;
+  font-size: 1.08rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1 !important;
+  text-align: center;
+}
+
+.zmeng-sidebar__menu.ant-menu .ant-menu-title-content > a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
+.zmeng-sidebar__menu.ant-menu .ant-menu-item-selected {
+  background: linear-gradient(180deg, rgba(45, 212, 191, 0.16), rgba(96, 165, 250, 0.12));
+  color: #eff7ff;
+}
+
+.zmeng-sidebar__menu.ant-menu .ant-menu-item::after {
+  display: none;
+}
+
+.zmeng-sidebar__footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.zmeng-sidebar__avatar.ant-avatar {
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.22), rgba(96, 165, 250, 0.2));
+  color: #eff7ff;
+  border: 1px solid rgba(120, 227, 255, 0.24);
+}
+
+.zmeng-sidebar__user.ant-typography {
+  max-width: 72px;
+  color: #93a9c7;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  text-align: center;
+  word-break: break-word;
+}

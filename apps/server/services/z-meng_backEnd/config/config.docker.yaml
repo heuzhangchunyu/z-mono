@@ -1,0 +1,18 @@
+env: docker
+app_name: z-meng-backend
+
+server:
+  host: 0.0.0.0
+  port: 4101
+
+database:
+  host: z-meng-postgres
+  port: 5432
+  user: postgres
+  password: postgres
+  db_name: z_meng
+  ssl_mode: disable
+
+runtime:
+  enable_http: true
+  migration_target: autoup

@@ -1,0 +1,44 @@
+services:
+  z-meng-backend:
+    container_name: z-meng-backend
+    build:
+      context: ../../../..
+      dockerfile: apps/server/services/z-meng_backEnd/Dockerfile
+    depends_on:
+      z-meng-postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      SERVER_HOST: 0.0.0.0
+      PORT: 4101
+      POSTGRES_HOST: z-meng-postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: z_meng
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      DATABASE_URL: postgres://postgres:postgres@z-meng-postgres:5432/z_meng
+    ports:
+      - "4101:4101"
+    restart: unless-stopped
+
+  z-meng-postgres:
+    container_name: z-meng-postgres
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: z_meng
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - z-meng-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d z_meng"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  z-meng-postgres-data:
