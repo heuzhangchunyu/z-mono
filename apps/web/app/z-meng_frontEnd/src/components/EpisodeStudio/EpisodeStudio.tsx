@@ -1,18 +1,20 @@
-import { Alert, Button, Input, Skeleton, Typography } from 'antd';
-import { Fragment, useEffect, useState } from 'react';
+import { Alert, Button, Input, Skeleton, Typography, message } from 'antd';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { listEpisodes, type EpisodeItem } from '../../services/episode/episode';
+import { listEpisodes, type EpisodeItem, updateEpisodeScript, updateEpisodeStage } from '../../services/episode/episode';
 import './EpisodeStudio.less';
-
-interface EpisodeStudioProps {
-  username: string;
-}
 
 type EpisodeStageKey = 'script' | 'subject' | 'keyframes' | 'video-production';
 
 interface EpisodeStage {
   key: EpisodeStageKey;
   label: string;
+}
+
+interface SubjectSection {
+  key: 'character' | 'scene' | 'prop';
+  label: string;
+  placeholderName: string;
 }
 
 const episodeStages: EpisodeStage[] = [
@@ -34,56 +36,38 @@ const episodeStages: EpisodeStage[] = [
   }
 ];
 
-function isEpisodeStageKey(value: string): value is EpisodeStageKey {
-  return episodeStages.some((stage) => stage.key === value);
-}
+const subjectSections: SubjectSection[] = [
+  {
+    key: 'character',
+    label: '角色',
+    placeholderName: '默认角色'
+  },
+  {
+    key: 'scene',
+    label: '场景',
+    placeholderName: '默认场景'
+  },
+  {
+    key: 'prop',
+    label: '道具',
+    placeholderName: '默认道具'
+  }
+];
 
-export default function EpisodeStudio({ username }: EpisodeStudioProps) {
+export default function EpisodeStudio() {
   const { episodeId } = useParams<{ episodeId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
   const [episode, setEpisode] = useState<EpisodeItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
-  const [completedStages, setCompletedStages] = useState<EpisodeStageKey[]>([]);
+  const [savingScript, setSavingScript] = useState(false);
+  const [advancingStage, setAdvancingStage] = useState(false);
+  const [messageApi, contextHolder] = message.useMessage();
 
   useEffect(() => {
     void loadEpisode();
   }, [episodeId]);
-
-  useEffect(() => {
-    if (!episodeId) {
-      setCompletedStages([]);
-      return;
-    }
-
-    const rawValue = window.sessionStorage.getItem(getEpisodeStageStorageKey(episodeId));
-    if (!rawValue) {
-      setCompletedStages([]);
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(rawValue);
-      const normalized = Array.isArray(parsed)
-        ? parsed.filter((item): item is EpisodeStageKey => typeof item === 'string' && isEpisodeStageKey(item))
-        : [];
-      setCompletedStages(normalized);
-    } catch {
-      setCompletedStages([]);
-    }
-  }, [episodeId]);
-
-  useEffect(() => {
-    if (!episodeId) {
-      return;
-    }
-
-    window.sessionStorage.setItem(
-      getEpisodeStageStorageKey(episodeId),
-      JSON.stringify(completedStages)
-    );
-  }, [completedStages, episodeId]);
 
   const loadEpisode = async () => {
     if (!episodeId) {
@@ -119,33 +103,62 @@ export default function EpisodeStudio({ username }: EpisodeStudioProps) {
     return <Navigate to="/creation" replace />;
   }
 
-  const currentStageKey = episodeStages.find((stage) => location.pathname.endsWith(`/${stage.key}`))?.key ?? 'script';
-  const currentStageIndex = episodeStages.findIndex((stage) => stage.key === currentStageKey);
-  const completedCount = getCompletedStageCount(completedStages);
-  const highestUnlockedIndex = Math.min(completedCount, episodeStages.length - 1);
+  const currentRouteStageKey = episodeStages.find((stage) => location.pathname.endsWith(`/${stage.key}`))?.key ?? 'script';
+  const storedStageKey = episode?.currentStage ?? 'script';
+  const currentStageIndex = episodeStages.findIndex((stage) => stage.key === storedStageKey);
+  const highestUnlockedIndex = Math.max(currentStageIndex, 0);
   const redirectStageKey = episodeStages[Math.max(highestUnlockedIndex, 0)]?.key ?? 'script';
+  const completedStages = useMemo(
+    () => episodeStages.filter((_stage, index) => index < highestUnlockedIndex).map((stage) => stage.key),
+    [highestUnlockedIndex]
+  );
 
-  if (currentStageIndex > highestUnlockedIndex) {
+  if (episode && episodeStages.findIndex((stage) => stage.key === currentRouteStageKey) > highestUnlockedIndex) {
     return <Navigate to={`/creation/episodes/${episodeId}/${redirectStageKey}`} replace />;
   }
 
-  const markStageCompleted = (stageKey: EpisodeStageKey) => {
+  const markStageCompleted = async (stageKey: EpisodeStageKey) => {
     const stageIndex = episodeStages.findIndex((stage) => stage.key === stageKey);
-    if (stageIndex === -1 || stageIndex > highestUnlockedIndex || completedStages.includes(stageKey)) {
+    const nextStage = episodeStages[stageIndex + 1];
+
+    if (!episode || !nextStage || stageIndex === -1 || stageIndex !== highestUnlockedIndex) {
       return;
     }
 
-    const nextCompletedStages = [...completedStages, stageKey];
-    setCompletedStages(nextCompletedStages);
-
-    const nextStage = episodeStages[stageIndex + 1];
-    if (nextStage) {
+    try {
+      setAdvancingStage(true);
+      const response = await updateEpisodeStage(episode.scriptId, nextStage.key);
+      setEpisode(response.data);
       navigate(`/creation/episodes/${episodeId}/${nextStage.key}`);
+    } catch (error) {
+      console.error('Failed to update episode stage.', error);
+      messageApi.error('里程碑状态更新失败');
+    } finally {
+      setAdvancingStage(false);
+    }
+  };
+
+  const handleScriptNext = async (scriptContent: string) => {
+    if (!episode || savingScript) {
+      return;
+    }
+
+    try {
+      setSavingScript(true);
+      const response = await updateEpisodeScript(episode.scriptId, scriptContent);
+      setEpisode(response.data);
+      navigate(`/creation/episodes/${episodeId}/${response.data.currentStage}`);
+    } catch (error) {
+      console.error('Failed to update episode script.', error);
+      messageApi.error('剧本保存失败');
+    } finally {
+      setSavingScript(false);
     }
   };
 
   return (
     <section className="zmeng-episode-studio">
+      {contextHolder}
       <header className="zmeng-episode-studio__hero">
         <nav className="zmeng-episode-studio__milestones" aria-label="剧集制作里程碑">
           {episodeStages.map((stage, index) => (
@@ -156,7 +169,7 @@ export default function EpisodeStudio({ username }: EpisodeStudioProps) {
                   to={`/creation/episodes/${episodeId}/${stage.key}`}
                   className={[
                     'zmeng-episode-studio__milestone',
-                    currentStageKey === stage.key ? 'is-active' : '',
+                    currentRouteStageKey === stage.key ? 'is-active' : '',
                     completedStages.includes(stage.key) ? 'is-completed' : ''
                   ].filter(Boolean).join(' ')}
                 >
@@ -204,11 +217,13 @@ export default function EpisodeStudio({ username }: EpisodeStudioProps) {
                 element={(
                   <EpisodeStagePanel
                     episode={episode}
-                    username={username}
                     stage={stage}
                     isCompleted={completedStages.includes(stage.key)}
-                    canComplete={stage.key === currentStageKey && currentStageIndex === highestUnlockedIndex}
-                    onComplete={() => markStageCompleted(stage.key)}
+                    canComplete={stage.key === currentRouteStageKey && stage.key === storedStageKey && Boolean(getNextStageKey(stage.key))}
+                    isSavingScript={savingScript}
+                    isAdvancingStage={advancingStage}
+                    onComplete={() => void markStageCompleted(stage.key)}
+                    onScriptNext={handleScriptNext}
                   />
                 )}
               />
@@ -223,15 +238,30 @@ export default function EpisodeStudio({ username }: EpisodeStudioProps) {
 
 interface EpisodeStagePanelProps {
   episode: EpisodeItem;
-  username: string;
   stage: EpisodeStage;
   isCompleted: boolean;
   canComplete: boolean;
+  isSavingScript: boolean;
+  isAdvancingStage: boolean;
   onComplete: () => void;
+  onScriptNext: (scriptContent: string) => Promise<void>;
 }
 
-function EpisodeStagePanel({ episode, username, stage, isCompleted, canComplete, onComplete }: EpisodeStagePanelProps) {
+function EpisodeStagePanel({
+  episode,
+  stage,
+  isCompleted,
+  canComplete,
+  isSavingScript,
+  isAdvancingStage,
+  onComplete,
+  onScriptNext
+}: EpisodeStagePanelProps) {
   const [scriptDraft, setScriptDraft] = useState(episode.scriptContent);
+
+  useEffect(() => {
+    setScriptDraft(episode.scriptContent);
+  }, [episode.scriptContent, episode.scriptId]);
 
   if (stage.key === 'script') {
     return (
@@ -247,9 +277,52 @@ function EpisodeStagePanel({ episode, username, stage, isCompleted, canComplete,
           </div>
 
           <div className="zmeng-episode-studio__script-footer">
-            <Button type="primary" size="large" onClick={onComplete} disabled={!canComplete}>
+            <Button
+              type="primary"
+              size="large"
+              loading={isSavingScript}
+              onClick={() => void onScriptNext(scriptDraft)}
+              disabled={!canComplete}
+            >
               下一步
             </Button>
+          </div>
+        </div>
+      </article>
+    );
+  }
+
+  if (stage.key === 'subject') {
+    return (
+      <article className="zmeng-episode-studio__panel zmeng-episode-studio__panel--subject">
+        <div className="zmeng-episode-studio__subject-layout">
+          <div className="zmeng-episode-studio__subject-sections">
+            {subjectSections.map((section) => (
+              <section key={section.key} className="zmeng-episode-studio__subject-row">
+                <Typography.Title level={4} className="zmeng-episode-studio__subject-row-title">
+                  {section.label}
+                </Typography.Title>
+
+                <div className="zmeng-episode-studio__subject-cards">
+                  <article className="zmeng-episode-studio__asset-card">
+                    <div className="zmeng-episode-studio__asset-card-image">占位图</div>
+                    <div className="zmeng-episode-studio__asset-card-name">{section.placeholderName}</div>
+                  </article>
+                </div>
+              </section>
+            ))}
+          </div>
+
+          <div className="zmeng-episode-studio__panel-actions">
+            {isCompleted ? (
+              <span className="zmeng-episode-studio__panel-status">当前里程碑已完成</span>
+            ) : null}
+
+            {!isCompleted && canComplete ? (
+              <Button type="primary" size="large" loading={isAdvancingStage} onClick={onComplete}>
+                下一步
+              </Button>
+            ) : null}
           </div>
         </div>
       </article>
@@ -264,7 +337,7 @@ function EpisodeStagePanel({ episode, username, stage, isCompleted, canComplete,
             {stage.label}
           </Typography.Title>
           <Typography.Text className="zmeng-episode-studio__panel-meta">
-            当前剧集：{episode.episodeName} / 用户：{episode.username ?? username}
+            当前剧集：{episode.episodeName} / 用户：{episode.username ?? '未命名用户'}
           </Typography.Text>
         </div>
       </div>
@@ -279,7 +352,7 @@ function EpisodeStagePanel({ episode, username, stage, isCompleted, canComplete,
         ) : null}
 
         {!isCompleted && canComplete ? (
-          <Button type="primary" size="large" onClick={onComplete}>
+          <Button type="primary" size="large" loading={isAdvancingStage} onClick={onComplete}>
             完成当前里程碑
           </Button>
         ) : null}
@@ -288,19 +361,7 @@ function EpisodeStagePanel({ episode, username, stage, isCompleted, canComplete,
   );
 }
 
-function getEpisodeStageStorageKey(episodeId: string): string {
-  return `zmeng-episode-stage-progress:${episodeId}`;
-}
-
-function getCompletedStageCount(completedStages: EpisodeStageKey[]): number {
-  let count = 0;
-
-  for (const stage of episodeStages) {
-    if (!completedStages.includes(stage.key)) {
-      break;
-    }
-    count += 1;
-  }
-
-  return count;
+function getNextStageKey(stageKey: EpisodeStageKey): EpisodeStageKey | null {
+  const currentIndex = episodeStages.findIndex((stage) => stage.key === stageKey);
+  return episodeStages[currentIndex + 1]?.key ?? null;
 }

@@ -23,12 +23,20 @@ export interface RuntimeConfig {
   migrationTarget: string;
 }
 
+export interface AIConfig {
+  provider: 'dashscope';
+  baseUrl: string;
+  model: string;
+  apiKey: string;
+}
+
 export interface Config {
   env: string;
   appName: string;
   server: ServerConfig;
   database: DatabaseConfig;
   runtime: RuntimeConfig;
+  ai: AIConfig;
 }
 
 interface RawConfig {
@@ -49,6 +57,12 @@ interface RawConfig {
   runtime?: {
     enable_http?: boolean;
     migration_target?: string;
+  };
+  ai?: {
+    provider?: 'dashscope';
+    base_url?: string;
+    model?: string;
+    api_key?: string;
   };
 }
 
@@ -78,6 +92,12 @@ export function loadConfig(configPath?: string): Config {
     runtime: {
       enableHttp: raw.runtime?.enable_http ?? true,
       migrationTarget: raw.runtime?.migration_target ?? 'autoup'
+    },
+    ai: {
+      provider: raw.ai?.provider ?? 'dashscope',
+      baseUrl: raw.ai?.base_url ?? 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+      model: raw.ai?.model ?? 'qwen-plus',
+      apiKey: raw.ai?.api_key ?? ''
     }
   };
 
@@ -126,6 +146,12 @@ function applyEnvOverrides(config: Config): Config {
     runtime: {
       enableHttp: parseBoolean(process.env.ENABLE_HTTP, config.runtime.enableHttp),
       migrationTarget: process.env.MIGRATION_TARGET ?? config.runtime.migrationTarget
+    },
+    ai: {
+      provider: 'dashscope',
+      baseUrl: process.env.DASHSCOPE_BASE_URL ?? config.ai.baseUrl,
+      model: process.env.DASHSCOPE_MODEL ?? config.ai.model,
+      apiKey: process.env.DASHSCOPE_API_KEY ?? config.ai.apiKey
     }
   };
 }

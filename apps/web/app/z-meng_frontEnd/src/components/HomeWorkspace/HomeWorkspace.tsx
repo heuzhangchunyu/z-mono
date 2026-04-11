@@ -16,7 +16,7 @@ export default function HomeWorkspace({ activeKey, username }: HomeWorkspaceProp
     : (
       <Routes>
         <Route index element={<CreationWorkspace username={username} />} />
-        <Route path="episodes/:episodeId/*" element={<EpisodeStudio username={username} />} />
+        <Route path="episodes/:episodeId/*" element={<EpisodeStudio />} />
         <Route path="*" element={<Navigate to="/creation" replace />} />
       </Routes>
     );

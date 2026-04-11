@@ -10,7 +10,6 @@ interface CreationWorkspaceProps {
 
 interface EpisodeFormValues {
   episodeName: string;
-  script: string;
   style: '动漫' | '真人';
   aspectRatio: '16:9' | '9:16' | '1:1';
 }
@@ -49,7 +48,6 @@ export default function CreationWorkspace({ username: _username }: CreationWorks
       setSubmitting(true);
       const response = await createEpisode({
         episodeName: values.episodeName,
-        script: values.script,
         style: values.style,
         aspectRatio: values.aspectRatio
       });
@@ -96,9 +94,6 @@ export default function CreationWorkspace({ username: _username }: CreationWorks
                   <Typography.Title level={5} className="zmeng-creation__episode-title">
                     {episode.episodeName}
                   </Typography.Title>
-                  <Typography.Paragraph className="zmeng-creation__episode-preview">
-                    {episode.scriptContent}
-                  </Typography.Paragraph>
                   <Space size={[8, 8]} wrap>
                     <Tag>{episode.style}</Tag>
                     <Tag>{episode.aspectRatio}</Tag>
@@ -133,19 +128,6 @@ export default function CreationWorkspace({ username: _username }: CreationWorks
               rules={[{ required: true, message: '请输入剧集名' }]}
             >
               <Input placeholder="请输入剧集名..." maxLength={120} />
-            </Form.Item>
-
-            <Form.Item
-              label="剧本内容"
-              name="script"
-              rules={[{ required: true, message: '请输入剧本内容' }]}
-            >
-              <Input.TextArea
-                placeholder="请输入这一集的剧本内容..."
-                autoSize={{ minRows: 8, maxRows: 14 }}
-                showCount
-                maxLength={3000}
-              />
             </Form.Item>
 
             <div className="zmeng-creation-modal__grid">

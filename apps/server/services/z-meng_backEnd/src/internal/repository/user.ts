@@ -1,21 +1,7 @@
 import type { Pool } from 'pg';
+import type { CreateUserInput, UserRecord } from '../model/user.js';
 
-export interface UserRecord {
-  id: number;
-  username: string;
-  passwordHash: string;
-  displayName: string | null;
-  role: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface CreateUserInput {
-  username: string;
-  passwordHash: string;
-  displayName?: string | null;
-}
+export type { UserRecord } from '../model/user.js';
 
 export class UserRepository {
   constructor(private readonly database: Pool) {}

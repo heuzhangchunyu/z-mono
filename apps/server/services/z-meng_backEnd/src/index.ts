@@ -1,16 +1,20 @@
 import Koa from 'koa';
-import Router from 'koa-router';
-import type { Pool } from 'pg';
 
-import { handleLogin } from './internal/auth/login.js';
-import { handleRegister } from './internal/auth/register.js';
+import { createTextGenerationProvider } from './internal/ai/factory.js';
 import { buildPostgresConnectionString, loadConfig } from './internal/config/config.js';
 import { migrate } from './internal/data/data.js';
-import { handleCreateEpisode } from './internal/episode/createEpisode.js';
-import { handleListEpisodes } from './internal/episode/listEpisodes.js';
+import { createCorsMiddleware, createErrorMiddleware } from './internal/http/middleware.js';
+import { createRouter } from './internal/http/router.js';
 import { EpisodeRepository } from './internal/repository/episode.js';
+import { LLMCallLogRepository } from './internal/repository/llmCallLog.js';
 import { createDatabasePool } from './internal/repository/postgres.js';
+import { PromptTemplateRepository } from './internal/repository/promptTemplate.js';
 import { UserRepository } from './internal/repository/user.js';
+import { AIChatService } from './internal/service/aiChatService.js';
+import { AuthService } from './internal/service/authService.js';
+import { EpisodeService } from './internal/service/episodeService.js';
+import { LLMCallLogService } from './internal/service/llmCallLogService.js';
+import { PromptTemplateService } from './internal/service/promptTemplateService.js';
 
 patchKoaUse();
 
@@ -23,14 +27,33 @@ async function main(): Promise<void> {
 
   const database = createDatabasePool(config.database);
   await database.query('SELECT 1');
+
   const userRepository = new UserRepository(database);
   const episodeRepository = new EpisodeRepository(database);
+  const promptTemplateRepository = new PromptTemplateRepository(database);
+  const llmCallLogRepository = new LLMCallLogRepository(database);
+
+  const authService = new AuthService(userRepository);
+  const episodeService = new EpisodeService(episodeRepository);
+  const promptTemplateService = new PromptTemplateService(promptTemplateRepository);
+  const llmCallLogService = new LLMCallLogService(llmCallLogRepository);
+  const aiChatService = new AIChatService(
+    createTextGenerationProvider(config.ai),
+    promptTemplateService,
+    llmCallLogService
+  );
 
   const app = new Koa();
   app.use(createCorsMiddleware());
-
   app.use(createErrorMiddleware());
-  const router = createRouter(database, userRepository, episodeRepository, config.database.host, config.database.dbName);
+  const router = createRouter({
+    database,
+    authService,
+    episodeService,
+    aiChatService,
+    databaseHost: config.database.host,
+    databaseName: config.database.dbName
+  });
   app.use(router.routes());
   app.use(router.allowedMethods());
 
@@ -81,95 +104,6 @@ function patchKoaUse(): void {
     this.middleware.push(middleware);
     return this;
   };
-}
-
-function createCorsMiddleware(): Koa.Middleware {
-  return async (ctx, next) => {
-    const origin = ctx.get('Origin');
-    if (origin) {
-      ctx.set('Access-Control-Allow-Origin', origin);
-      ctx.append('Vary', 'Origin');
-    }
-    ctx.set('Access-Control-Allow-Methods', 'GET,HEAD,PUT,POST,DELETE,PATCH,OPTIONS');
-    ctx.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    ctx.set('Access-Control-Allow-Credentials', 'true');
-
-    if (ctx.method === 'OPTIONS') {
-      ctx.status = 204;
-      return;
-    }
-
-    await next();
-  };
-}
-
-function createErrorMiddleware(): Koa.Middleware {
-  return async (ctx, next) => {
-    try {
-      await next();
-    } catch (error) {
-      const status = typeof error === 'object' && error && 'status' in error && typeof error.status === 'number'
-        ? error.status
-        : 500;
-      const message = error instanceof Error ? error.message : 'Internal server error.';
-
-      ctx.status = status;
-      ctx.body = {
-        message
-      };
-
-      if (status >= 500) {
-        console.error('Request failed.', error);
-      }
-    }
-  };
-}
-
-function createRouter(
-  database: Pool,
-  userRepository: UserRepository,
-  episodeRepository: EpisodeRepository,
-  databaseHost: string,
-  databaseName: string
-): Router {
-  const router = new Router();
-
-  router.get('/health', async (ctx) => {
-    await database.query('SELECT 1');
-    ctx.body = {
-      status: 'ok'
-    };
-  });
-
-  router.post('/auth/register', async (ctx) => {
-    await handleRegister(ctx, userRepository);
-  });
-
-  router.post('/auth/login', async (ctx) => {
-    await handleLogin(ctx, userRepository);
-  });
-
-  router.post('/episodes', async (ctx) => {
-    await handleCreateEpisode(ctx, episodeRepository, userRepository);
-  });
-
-  router.get('/episodes', async (ctx) => {
-    await handleListEpisodes(ctx, episodeRepository, userRepository);
-  });
-
-  router.get('/', (ctx) => {
-    ctx.body = {
-      service: 'z-meng-backend',
-      message: 'z-meng AI comic drama service is running.',
-      database: {
-        host: databaseHost,
-        name: databaseName
-      },
-      modules: ['script', 'storyboard', 'asset-generation', 'voice-sync']
-    };
-  });
-
-  return router;
 }
 
 function parseConfigPath(args: string[]): string | undefined {

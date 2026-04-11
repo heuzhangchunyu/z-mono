@@ -16,3 +16,9 @@ database:
 runtime:
   enable_http: true
   migration_target: autoup
+
+ai:
+  provider: dashscope
+  base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+  model: qwen-plus
+  api_key: "sk-4cf9a21b0dbc4634af5db628bf1e35e2"

@@ -108,6 +108,10 @@
   overflow: hidden;
 }
 
+.zmeng-episode-studio__panel--subject {
+  overflow: hidden;
+}
+
 .zmeng-episode-studio__panel-head {
   display: flex;
   align-items: flex-start;
@@ -212,6 +216,71 @@
   align-items: center;
   gap: 14px;
   margin-top: 28px;
+}
+
+.zmeng-episode-studio__subject-layout {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.zmeng-episode-studio__subject-sections {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  overflow: auto;
+}
+
+.zmeng-episode-studio__subject-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.zmeng-episode-studio__subject-row-title.ant-typography {
+  margin-bottom: 0;
+  color: #eff7ff;
+  font-size: 1.05rem;
+}
+
+.zmeng-episode-studio__subject-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.zmeng-episode-studio__asset-card {
+  width: 180px;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.zmeng-episode-studio__asset-card-image {
+  height: 124px;
+  border: 1px solid rgba(110, 149, 201, 0.24);
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(17, 29, 52, 0.86), rgba(8, 15, 28, 0.96)),
+    radial-gradient(circle at top left, rgba(84, 214, 255, 0.14), transparent 52%);
+  color: #7f97ba;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.zmeng-episode-studio__asset-card-name {
+  color: #dbe9ff;
+  font-size: 0.96rem;
+  font-weight: 600;
 }
 
 .zmeng-episode-studio__panel-actions .ant-btn.ant-btn-primary {
