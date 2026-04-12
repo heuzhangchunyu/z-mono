@@ -20,5 +20,6 @@ runtime:
 ai:
   provider: dashscope
   base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
-  model: qwen-plus
+  model: qwen3.6-plus
   api_key: ""
+  timeout_ms: 120000

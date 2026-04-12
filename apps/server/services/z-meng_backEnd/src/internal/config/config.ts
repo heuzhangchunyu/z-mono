@@ -28,6 +28,7 @@ export interface AIConfig {
   baseUrl: string;
   model: string;
   apiKey: string;
+  timeoutMs: number;
 }
 
 export interface Config {
@@ -63,6 +64,7 @@ interface RawConfig {
     base_url?: string;
     model?: string;
     api_key?: string;
+    timeout_ms?: number;
   };
 }
 
@@ -96,8 +98,9 @@ export function loadConfig(configPath?: string): Config {
     ai: {
       provider: raw.ai?.provider ?? 'dashscope',
       baseUrl: raw.ai?.base_url ?? 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-      model: raw.ai?.model ?? 'qwen-plus',
-      apiKey: raw.ai?.api_key ?? ''
+      model: raw.ai?.model ?? 'qwen3.6-plus',
+      apiKey: raw.ai?.api_key ?? '',
+      timeoutMs: raw.ai?.timeout_ms ?? 120000
     }
   };
 
@@ -151,7 +154,8 @@ function applyEnvOverrides(config: Config): Config {
       provider: 'dashscope',
       baseUrl: process.env.DASHSCOPE_BASE_URL ?? config.ai.baseUrl,
       model: process.env.DASHSCOPE_MODEL ?? config.ai.model,
-      apiKey: process.env.DASHSCOPE_API_KEY ?? config.ai.apiKey
+      apiKey: process.env.DASHSCOPE_API_KEY ?? config.ai.apiKey,
+      timeoutMs: parseNumber(process.env.DASHSCOPE_TIMEOUT_MS, config.ai.timeoutMs)
     }
   };
 }

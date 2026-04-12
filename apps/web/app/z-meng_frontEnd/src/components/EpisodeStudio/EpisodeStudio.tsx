@@ -1,7 +1,15 @@
 import { Alert, Button, Input, Skeleton, Typography, message } from 'antd';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { listEpisodes, type EpisodeItem, updateEpisodeScript, updateEpisodeStage } from '../../services/episode/episode';
+import {
+  getEpisodeSubjects,
+  listEpisodes,
+  type EpisodeItem,
+  type EpisodeSubjectsItem,
+  triggerEpisodeSubjectsExtraction,
+  updateEpisodeScript,
+  updateEpisodeStage
+} from '../../services/episode/episode';
 import './EpisodeStudio.less';
 
 type EpisodeStageKey = 'script' | 'subject' | 'keyframes' | 'video-production';
@@ -16,6 +24,8 @@ interface SubjectSection {
   label: string;
   placeholderName: string;
 }
+
+type SubjectSectionKey = SubjectSection['key'];
 
 const episodeStages: EpisodeStage[] = [
   {
@@ -63,6 +73,9 @@ export default function EpisodeStudio() {
   const [errorMessage, setErrorMessage] = useState('');
   const [savingScript, setSavingScript] = useState(false);
   const [advancingStage, setAdvancingStage] = useState(false);
+  const [subjectState, setSubjectState] = useState<EpisodeSubjectsItem | null>(null);
+  const [subjectLoading, setSubjectLoading] = useState(false);
+  const [triggeringSubjectExtraction, setTriggeringSubjectExtraction] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
 
   useEffect(() => {
@@ -113,6 +126,26 @@ export default function EpisodeStudio() {
     [highestUnlockedIndex]
   );
 
+  useEffect(() => {
+    if (!episode || currentRouteStageKey !== 'subject') {
+      return;
+    }
+
+    void loadSubjectState(episode.scriptId);
+  }, [episode?.scriptId, currentRouteStageKey]);
+
+  useEffect(() => {
+    if (!episode || currentRouteStageKey !== 'subject' || subjectState?.status !== 'processing') {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      void loadSubjectState(episode.scriptId, true);
+    }, 2000);
+
+    return () => window.clearInterval(timer);
+  }, [episode?.scriptId, currentRouteStageKey, subjectState?.status]);
+
   if (episode && episodeStages.findIndex((stage) => stage.key === currentRouteStageKey) > highestUnlockedIndex) {
     return <Navigate to={`/creation/episodes/${episodeId}/${redirectStageKey}`} replace />;
   }
@@ -153,6 +186,47 @@ export default function EpisodeStudio() {
       messageApi.error('剧本保存失败');
     } finally {
       setSavingScript(false);
+    }
+  };
+
+  const handleExtractSubjects = () => {
+    void triggerSubjectExtraction();
+  };
+
+  const loadSubjectState = async (scriptId: number, silent = false) => {
+    try {
+      if (!silent) {
+        setSubjectLoading(true);
+      }
+
+      const response = await getEpisodeSubjects(scriptId);
+      setSubjectState(response.data);
+    } catch (error) {
+      console.error('Failed to load episode subjects.', error);
+      if (!silent) {
+        messageApi.error('主体信息加载失败');
+      }
+    } finally {
+      if (!silent) {
+        setSubjectLoading(false);
+      }
+    }
+  };
+
+  const triggerSubjectExtraction = async () => {
+    if (!episode || triggeringSubjectExtraction) {
+      return;
+    }
+
+    try {
+      setTriggeringSubjectExtraction(true);
+      const response = await triggerEpisodeSubjectsExtraction(episode.scriptId);
+      setSubjectState(response.data);
+    } catch (error) {
+      console.error('Failed to trigger episode subject extraction.', error);
+      messageApi.error('主体提取触发失败');
+    } finally {
+      setTriggeringSubjectExtraction(false);
     }
   };
 
@@ -222,8 +296,12 @@ export default function EpisodeStudio() {
                     canComplete={stage.key === currentRouteStageKey && stage.key === storedStageKey && Boolean(getNextStageKey(stage.key))}
                     isSavingScript={savingScript}
                     isAdvancingStage={advancingStage}
+                    subjectState={subjectState}
+                    subjectLoading={subjectLoading}
+                    isTriggeringSubjectExtraction={triggeringSubjectExtraction}
                     onComplete={() => void markStageCompleted(stage.key)}
                     onScriptNext={handleScriptNext}
+                    onExtractSubjects={handleExtractSubjects}
                   />
                 )}
               />
@@ -243,8 +321,12 @@ interface EpisodeStagePanelProps {
   canComplete: boolean;
   isSavingScript: boolean;
   isAdvancingStage: boolean;
+  subjectState: EpisodeSubjectsItem | null;
+  subjectLoading: boolean;
+  isTriggeringSubjectExtraction: boolean;
   onComplete: () => void;
   onScriptNext: (scriptContent: string) => Promise<void>;
+  onExtractSubjects: () => void;
 }
 
 function EpisodeStagePanel({
@@ -254,10 +336,15 @@ function EpisodeStagePanel({
   canComplete,
   isSavingScript,
   isAdvancingStage,
+  subjectState,
+  subjectLoading,
+  isTriggeringSubjectExtraction,
   onComplete,
-  onScriptNext
+  onScriptNext,
+  onExtractSubjects
 }: EpisodeStagePanelProps) {
   const [scriptDraft, setScriptDraft] = useState(episode.scriptContent);
+  const canAdvanceFromScript = Boolean(getNextStageKey(stage.key)) && scriptDraft.trim().length > 0;
 
   useEffect(() => {
     setScriptDraft(episode.scriptContent);
@@ -282,7 +369,7 @@ function EpisodeStagePanel({
               size="large"
               loading={isSavingScript}
               onClick={() => void onScriptNext(scriptDraft)}
-              disabled={!canComplete}
+              disabled={!canAdvanceFromScript}
             >
               下一步
             </Button>
@@ -293,6 +380,11 @@ function EpisodeStagePanel({
   }
 
   if (stage.key === 'subject') {
+    const isSubjectProcessing = subjectState?.status === 'processing' || isTriggeringSubjectExtraction;
+    const canExtractSubjects = !subjectLoading && !isTriggeringSubjectExtraction && !isSubjectProcessing;
+    const hasTriggeredSubjectExtraction = Boolean(subjectState && subjectState.status !== 'waiting');
+    const extractButtonLabel = hasTriggeredSubjectExtraction ? '重新提取' : '提取主体';
+
     return (
       <article className="zmeng-episode-studio__panel zmeng-episode-studio__panel--subject">
         <div className="zmeng-episode-studio__subject-layout">
@@ -304,21 +396,32 @@ function EpisodeStagePanel({
                 </Typography.Title>
 
                 <div className="zmeng-episode-studio__subject-cards">
-                  <article className="zmeng-episode-studio__asset-card">
-                    <div className="zmeng-episode-studio__asset-card-image">占位图</div>
-                    <div className="zmeng-episode-studio__asset-card-name">{section.placeholderName}</div>
-                  </article>
+                  {renderSubjectCards(section, subjectState, isSubjectProcessing)}
                 </div>
               </section>
             ))}
           </div>
 
           <div className="zmeng-episode-studio__panel-actions">
+            <Button
+              type={hasTriggeredSubjectExtraction ? 'default' : 'primary'}
+              size="large"
+              onClick={onExtractSubjects}
+              loading={isTriggeringSubjectExtraction || isSubjectProcessing}
+              disabled={!canExtractSubjects}
+            >
+              {extractButtonLabel}
+            </Button>
+
+            {subjectState?.status === 'failed' && subjectState.errorMessage ? (
+              <span className="zmeng-episode-studio__panel-status is-error">{subjectState.errorMessage}</span>
+            ) : null}
+
             {isCompleted ? (
               <span className="zmeng-episode-studio__panel-status">当前里程碑已完成</span>
             ) : null}
 
-            {!isCompleted && canComplete ? (
+            {!isCompleted && canComplete && hasTriggeredSubjectExtraction && !isSubjectProcessing ? (
               <Button type="primary" size="large" loading={isAdvancingStage} onClick={onComplete}>
                 下一步
               </Button>
@@ -364,4 +467,55 @@ function EpisodeStagePanel({
 function getNextStageKey(stageKey: EpisodeStageKey): EpisodeStageKey | null {
   const currentIndex = episodeStages.findIndex((stage) => stage.key === stageKey);
   return episodeStages[currentIndex + 1]?.key ?? null;
+}
+
+function getSectionItems(sectionKey: SubjectSectionKey, subjectState: EpisodeSubjectsItem | null): string[] {
+  if (!subjectState) {
+    return [];
+  }
+
+  switch (sectionKey) {
+    case 'character':
+      return subjectState.characters;
+    case 'scene':
+      return subjectState.scenes;
+    case 'prop':
+      return subjectState.props;
+    default:
+      return [];
+  }
+}
+
+function renderSubjectCards(
+  section: SubjectSection,
+  subjectState: EpisodeSubjectsItem | null,
+  isSubjectProcessing: boolean
+) {
+  if (isSubjectProcessing) {
+    return (
+      <article className="zmeng-episode-studio__asset-card is-loading">
+        <div className="zmeng-episode-studio__asset-card-image">
+          <span>提取中</span>
+        </div>
+        <div className="zmeng-episode-studio__asset-card-name">主体识别中...</div>
+      </article>
+    );
+  }
+
+  const sectionItems = getSectionItems(section.key, subjectState);
+  if (sectionItems.length > 0) {
+    return sectionItems.map((item) => (
+      <article key={`${section.key}-${item}`} className="zmeng-episode-studio__asset-card">
+        <div className="zmeng-episode-studio__asset-card-image">主体图占位</div>
+        <div className="zmeng-episode-studio__asset-card-name">{item}</div>
+      </article>
+    ));
+  }
+
+  return (
+    <article className="zmeng-episode-studio__asset-card">
+      <div className="zmeng-episode-studio__asset-card-image">占位图</div>
+      <div className="zmeng-episode-studio__asset-card-name">{section.placeholderName}</div>
+    </article>
+  );
 }

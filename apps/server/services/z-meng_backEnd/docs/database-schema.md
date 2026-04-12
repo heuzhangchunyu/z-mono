@@ -13,6 +13,8 @@
 - `2026040903_episode_current_stage`
 - `2026040904_ai_prompt_templates_and_llm_call_logs`
 - `2026041101_extract_subjects_prompt_template`
+- `2026041102_episode_subjects`
+- `2026041103_prompt_templates_use_qwen36plus`
 
 ## 业务表
 
@@ -122,6 +124,35 @@
 - 外键：`fk_llm_call_logs_user (user_id) REFERENCES users(id)`
 - 外键：`fk_llm_call_logs_prompt_template (prompt_template_id) REFERENCES prompt_templates(id)`
 
+### `episode_subjects`
+
+用途：记录每个剧集的主体提取状态以及角色 / 场景 / 道具名称列表。
+
+| 字段名 | 类型 | 约束/默认值 | 说明 |
+| --- | --- | --- | --- |
+| `id` | `BIGSERIAL` | 主键 | 记录 ID |
+| `script_id` | `BIGINT` | `NOT NULL UNIQUE` | 所属剧集 ID |
+| `status` | `VARCHAR(32)` | `NOT NULL DEFAULT 'waiting'` | 提取状态，取值为 `waiting / processing / success / failed` |
+| `characters_json` | `JSONB` | `NOT NULL DEFAULT '[]'::jsonb` | 角色名称列表 |
+| `scenes_json` | `JSONB` | `NOT NULL DEFAULT '[]'::jsonb` | 场景名称列表 |
+| `props_json` | `JSONB` | `NOT NULL DEFAULT '[]'::jsonb` | 道具名称列表 |
+| `error_message` | `TEXT` | 可空 | 提取失败原因 |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | 创建时间 |
+| `updated_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | 更新时间 |
+
+索引与约束：
+
+- 主键：`episode_subjects_pkey (id)`
+- 唯一约束：`script_id`
+- 普通索引：`idx_episode_subjects_status (status)`
+- 普通索引：`idx_episode_subjects_updated_at (updated_at)`
+- 外键：`fk_episode_subjects_script_id (script_id) REFERENCES episodes(script_id)`
+
+表关系：
+
+- `episode_subjects.script_id -> episodes.script_id`
+- 一部剧集对应一条主体提取记录，状态和角色 / 场景 / 道具名称都存放在这条记录里
+
 ## 迁移元数据表
 
 以下两张表不是业务表，而是当前项目迁移系统自维护的元数据表。
@@ -160,4 +191,5 @@
 - `apps/server/services/z-meng_backEnd/src/internal/data/migrations/episode_current_stage.sql`
 - `apps/server/services/z-meng_backEnd/src/internal/data/migrations/ai_prompt_templates_and_llm_call_logs.sql`
 - `apps/server/services/z-meng_backEnd/src/internal/data/migrations/extract_subjects_prompt_template.sql`
+- `apps/server/services/z-meng_backEnd/src/internal/data/migrations/episode_subjects.sql`
 - `apps/server/services/z-meng_backEnd/src/pkg/migrate/migrate.ts`

@@ -1,4 +1,5 @@
 .zmeng-episode-studio {
+  --text-color-1: #7fe0d1; /* 文案色号1 */
   width: 100%;
   max-width: 100%;
   height: 100%;
@@ -261,6 +262,25 @@
   gap: 10px;
 }
 
+.zmeng-episode-studio__asset-card.is-loading .zmeng-episode-studio__asset-card-image {
+  position: relative;
+  overflow: hidden;
+}
+
+.zmeng-episode-studio__asset-card.is-loading .zmeng-episode-studio__asset-card-image::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(84, 214, 255, 0.04) 0%,
+    rgba(84, 214, 255, 0.18) 50%,
+    rgba(84, 214, 255, 0.04) 100%
+  );
+  transform: translateX(-100%);
+  animation: zmeng-subject-loading 1.6s linear infinite;
+}
+
 .zmeng-episode-studio__asset-card-image {
   height: 124px;
   border: 1px solid rgba(110, 149, 201, 0.24);
@@ -283,6 +303,10 @@
   font-weight: 600;
 }
 
+.zmeng-episode-studio__panel-status.is-error {
+  color: #ff9b9b;
+}
+
 .zmeng-episode-studio__panel-actions .ant-btn.ant-btn-primary {
   min-width: 168px;
   min-height: 46px;
@@ -300,8 +324,36 @@
   color: #03111a !important;
 }
 
+.zmeng-episode-studio__panel-actions .ant-btn.ant-btn-default {
+  min-width: 168px;
+  min-height: 46px;
+  border-radius: 14px;
+  color: var(--text-color-1);
+}
+
+.zmeng-episode-studio__panel-actions .ant-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.zmeng-episode-studio__panel-actions .ant-btn.ant-btn-loading {
+  opacity: 1;
+}
+
+.zmeng-episode-studio__panel-actions .ant-btn.ant-btn-loading,
+.zmeng-episode-studio__panel-actions .ant-btn.ant-btn-loading:hover,
+.zmeng-episode-studio__panel-actions .ant-btn.ant-btn-loading:focus {
+  color: inherit !important;
+}
+
+.zmeng-episode-studio__panel-actions .ant-btn .ant-btn-loading-icon {
+  color: inherit;
+}
+
 .zmeng-episode-studio__panel-status {
-  color: #7fe0d1;
+  color: var(--text-color-1);
   font-weight: 600;
 }
 
@@ -314,4 +366,14 @@
 
 .zmeng-episode-studio__alert.ant-alert {
   padding: 18px 20px;
+}
+
+@keyframes zmeng-subject-loading {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(100%);
+  }
 }

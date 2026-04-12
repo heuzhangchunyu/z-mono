@@ -19,7 +19,7 @@
 ```bash
 export DASHSCOPE_API_KEY="你的阿里云百炼 API Key"
 export DASHSCOPE_BASE_URL="https://dashscope.aliyuncs.com/compatible-mode/v1"
-export DASHSCOPE_MODEL="qwen-plus"
+export DASHSCOPE_MODEL="qwen3.6-plus"
 ```
 
 ## 接口示例
@@ -35,7 +35,7 @@ curl -X POST http://127.0.0.1:4101/ai/chat \
   -d '{
     "prompt": "请生成一个科幻短剧第一集梗概",
     "systemPrompt": "你是一名擅长短剧创作的编剧助手。",
-    "model": "qwen-plus",
+    "model": "qwen3.6-plus",
     "source": "script_generation"
   }'
 ```
@@ -78,7 +78,7 @@ curl -X POST http://127.0.0.1:4101/ai/chat \
   "message": "AI completion generated successfully.",
   "data": {
     "text": "模型返回的文本内容",
-    "model": "qwen-plus",
+    "model": "qwen3.6-plus",
     "finishReason": "stop",
     "usage": {
       "inputTokens": 123,

@@ -5,6 +5,7 @@ export interface GenerateChatPayload {
   systemPrompt?: string;
   model?: string;
   temperature?: number;
+  stream?: boolean;
   templateType?: string;
   templateVariables?: Record<string, TemplateVariableValue>;
   source?: string;

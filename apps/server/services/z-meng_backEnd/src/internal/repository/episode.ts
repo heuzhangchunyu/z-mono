@@ -2,6 +2,7 @@ import type { Pool } from 'pg';
 import type {
   CreateEpisodeInput,
   EpisodeAspectRatio,
+  EpisodeLookupInput,
   EpisodeRecord,
   EpisodeStage,
   EpisodeStyle
@@ -30,6 +31,29 @@ export class EpisodeRepository {
           INSERT INTO episodes (user_id, episode_name, style, aspect_ratio, created_at, updated_at)
           VALUES ($1, $2, $3, $4, NOW(), NOW())
           RETURNING script_id, user_id, episode_name, script_content, current_stage, style, aspect_ratio, created_at, updated_at
+        ),
+        inserted_subjects AS (
+          INSERT INTO episode_subjects (
+            script_id,
+            status,
+            characters_json,
+            scenes_json,
+            props_json,
+            error_message,
+            created_at,
+            updated_at
+          )
+          SELECT
+            script_id,
+            'waiting',
+            '[]'::jsonb,
+            '[]'::jsonb,
+            '[]'::jsonb,
+            NULL,
+            NOW(),
+            NOW()
+          FROM inserted_episode
+          ON CONFLICT (script_id) DO NOTHING
         )
         SELECT
           inserted_episode.script_id,
@@ -209,6 +233,67 @@ export class EpisodeRepository {
         LEFT JOIN users ON users.id = updated_episode.user_id
       `,
       [episodeId, userId, currentStage]
+    );
+
+    const row = result.rows[0];
+    if (!row) {
+      return null;
+    }
+
+    return {
+      scriptId: Number(row.script_id),
+      userId: row.user_id === null ? null : Number(row.user_id),
+      username: row.username,
+      episodeName: row.episode_name,
+      scriptContent: row.script_content,
+      currentStage: row.current_stage,
+      style: row.style,
+      aspectRatio: row.aspect_ratio,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    };
+  }
+
+  async findEpisodeByScriptIdAndUserId(inputOrEpisodeId: EpisodeLookupInput | number, maybeUserId?: number): Promise<EpisodeRecord | null> {
+    const lookup = typeof inputOrEpisodeId === 'number'
+      ? {
+          episodeId: inputOrEpisodeId,
+          userId: maybeUserId ?? 0
+        }
+      : inputOrEpisodeId;
+
+    const result = await this.database.query<{
+      script_id: string;
+      user_id: string | null;
+      username: string | null;
+      episode_name: string;
+      script_content: string;
+      current_stage: EpisodeStage;
+      style: EpisodeStyle;
+      aspect_ratio: EpisodeAspectRatio;
+      created_at: string;
+      updated_at: string;
+    }>(
+      `
+        SELECT
+          episodes.script_id,
+          episodes.user_id,
+          users.username,
+          episodes.episode_name,
+          episodes.script_content,
+          episodes.current_stage,
+          episodes.style,
+          episodes.aspect_ratio,
+          episodes.created_at,
+          episodes.updated_at
+        FROM episodes
+        LEFT JOIN users ON users.id = episodes.user_id
+        WHERE episodes.script_id = $1
+          AND episodes.user_id = $2
+          AND episodes.deleted_at IS NULL
+        LIMIT 1
+      `,
+      [lookup.episodeId, lookup.userId]
     );
 
     const row = result.rows[0];

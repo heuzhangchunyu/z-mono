@@ -19,6 +19,17 @@ export interface EpisodeItem {
   updatedAt: string;
 }
 
+export interface EpisodeSubjectsItem {
+  scriptId: number;
+  status: 'waiting' | 'processing' | 'success' | 'failed';
+  characters: string[];
+  scenes: string[];
+  props: string[];
+  errorMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface CreateEpisodeResponse {
   message: string;
   data: EpisodeItem;
@@ -36,6 +47,15 @@ interface UpdateEpisodeStageResponse {
 
 interface ListEpisodesResponse {
   data: EpisodeItem[];
+}
+
+interface EpisodeSubjectsResponse {
+  data: EpisodeSubjectsItem;
+}
+
+interface TriggerEpisodeSubjectsExtractionResponse {
+  message: string;
+  data: EpisodeSubjectsItem;
 }
 
 export async function createEpisode(payload: CreateEpisodePayload) {
@@ -62,5 +82,15 @@ export async function updateEpisodeStage(
   const response = await request.patch<UpdateEpisodeStageResponse>(`/episodes/${scriptId}/stage`, {
     currentStage
   });
+  return response.data;
+}
+
+export async function getEpisodeSubjects(scriptId: number) {
+  const response = await request.get<EpisodeSubjectsResponse>(`/episodes/${scriptId}/subjects`);
+  return response.data;
+}
+
+export async function triggerEpisodeSubjectsExtraction(scriptId: number) {
+  const response = await request.post<TriggerEpisodeSubjectsExtractionResponse>(`/episodes/${scriptId}/subjects/extract`);
   return response.data;
 }

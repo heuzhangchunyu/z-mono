@@ -9,6 +9,7 @@ import type {
 } from '../model/episode.js';
 import { AuthService } from '../service/authService.js';
 import { EpisodeService } from '../service/episodeService.js';
+import { EpisodeSubjectService } from '../service/episodeSubjectService.js';
 
 export function createCreateEpisodeHandler(authService: AuthService, episodeService: EpisodeService): Koa.Middleware {
   return async (ctx) => {
@@ -62,6 +63,39 @@ export function createUpdateEpisodeStageHandler(authService: AuthService, episod
     ctx.body = {
       message: `Episode ${episode.scriptId} stage updated successfully.`,
       data: episode
+    };
+  };
+}
+
+export function createGetEpisodeSubjectsHandler(
+  authService: AuthService,
+  episodeSubjectService: EpisodeSubjectService
+): Koa.Middleware {
+  return async (ctx) => {
+    const episodeId = readEpisodeId(ctx);
+    const user = await authService.requireActiveUser(readAuthenticatedUserId(ctx));
+    const subjectRecord = await episodeSubjectService.getEpisodeSubjects(episodeId, user.id);
+
+    ctx.status = 200;
+    ctx.body = {
+      data: subjectRecord
+    };
+  };
+}
+
+export function createExtractEpisodeSubjectsHandler(
+  authService: AuthService,
+  episodeSubjectService: EpisodeSubjectService
+): Koa.Middleware {
+  return async (ctx) => {
+    const episodeId = readEpisodeId(ctx);
+    const user = await authService.requireActiveUser(readAuthenticatedUserId(ctx));
+    const subjectRecord = await episodeSubjectService.triggerSubjectExtraction(episodeId, user.id);
+
+    ctx.status = 202;
+    ctx.body = {
+      message: 'Episode subject extraction started.',
+      data: subjectRecord
     };
   };
 }

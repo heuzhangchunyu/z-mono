@@ -39,3 +39,8 @@ export interface UpdateEpisodeScriptPayload {
 export interface UpdateEpisodeStagePayload {
   currentStage?: EpisodeStage;
 }
+
+export interface EpisodeLookupInput {
+  episodeId: number;
+  userId: number;
+}

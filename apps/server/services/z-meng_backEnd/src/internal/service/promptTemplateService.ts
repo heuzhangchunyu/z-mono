@@ -6,7 +6,6 @@ export interface RenderedPromptTemplate {
   template: PromptTemplateRecord;
   prompt: string;
   systemPrompt: string | null;
-  model: string | null;
 }
 
 export class PromptTemplateService {
@@ -28,8 +27,7 @@ export class PromptTemplateService {
     return {
       template,
       prompt,
-      systemPrompt: template.systemPrompt,
-      model: template.model
+      systemPrompt: template.systemPrompt
     };
   }
 }
