@@ -15,6 +15,8 @@
 - `2026041101_extract_subjects_prompt_template`
 - `2026041102_episode_subjects`
 - `2026041103_prompt_templates_use_qwen36plus`
+- `2026041201_episode_subject_items`
+- `2026041202_episode_subject_images`
 
 ## 业务表
 
@@ -153,6 +155,65 @@
 - `episode_subjects.script_id -> episodes.script_id`
 - 一部剧集对应一条主体提取记录，状态和角色 / 场景 / 道具名称都存放在这条记录里
 
+### `episode_subject_items`
+
+用途：剧集主体明细表，每个主体一条记录。这里的 `script_id` 也就是当前项目里的剧集 ID / 剧本 ID。
+
+| 字段名 | 类型 | 约束/默认值 | 说明 |
+| --- | --- | --- | --- |
+| `id` | `BIGSERIAL` | 主键 | 主体 ID |
+| `script_id` | `BIGINT` | `NOT NULL` | 所属剧集 ID，等同于当前项目里的剧本 ID |
+| `subject_type` | `VARCHAR(20)` | `NOT NULL` | 主体类型：`character / scene / prop` |
+| `subject_name` | `VARCHAR(255)` | `NOT NULL` | 主体名称 |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | 创建时间 |
+| `updated_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | 更新时间 |
+
+索引与约束：
+
+- 主键：`episode_subject_items_pkey (id)`
+- 普通索引：`idx_episode_subject_items_script_id (script_id)`
+- 普通索引：`idx_episode_subject_items_type (subject_type)`
+- 唯一索引：`idx_episode_subject_items_unique_name (script_id, subject_type, subject_name)`
+- 外键：`fk_episode_subject_items_script_id (script_id) REFERENCES episodes(script_id)`
+
+表关系：
+
+- `episode_subject_items.script_id -> episodes.script_id`
+- 每个主体现在都有独立的 `id`
+- 后续如果要查询某个主体的图片生成历史，应通过 `episode_subject_items.id` 关联对应图片历史表
+
+### `episode_subject_images`
+
+用途：主体图片生成历史表，每次主体生图请求对应一条记录。
+
+| 字段名 | 类型 | 约束/默认值 | 说明 |
+| --- | --- | --- | --- |
+| `id` | `BIGSERIAL` | 主键 | 图片生成记录 ID |
+| `subject_item_id` | `BIGINT` | `NOT NULL` | 主体 ID，对应 `episode_subject_items.id` |
+| `script_id` | `BIGINT` | `NOT NULL` | 所属剧集 ID，等同于当前项目里的剧本 ID |
+| `prompt` | `TEXT` | `NOT NULL DEFAULT ''` | 本次主体生图要求 |
+| `image_url` | `TEXT` | 可空 | 生成成功后的图片地址 |
+| `status` | `VARCHAR(20)` | `NOT NULL DEFAULT 'waiting'` | 生图状态，取值为 `waiting / processing / success / failed` |
+| `provider` | `VARCHAR(50)` | `NOT NULL DEFAULT 'dashscope'` | 图片模型提供商 |
+| `model` | `VARCHAR(100)` | `NOT NULL DEFAULT ''` | 实际使用的图片模型名 |
+| `error_message` | `TEXT` | 可空 | 生成失败原因 |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | 创建时间 |
+| `updated_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | 更新时间 |
+
+索引与约束：
+
+- 主键：`episode_subject_images_pkey (id)`
+- 普通索引：`idx_episode_subject_images_subject_item_id (subject_item_id, created_at DESC)`
+- 普通索引：`idx_episode_subject_images_script_id (script_id)`
+- 外键：`fk_episode_subject_images_subject_item_id (subject_item_id) REFERENCES episode_subject_items(id)`
+- 外键：`fk_episode_subject_images_script_id (script_id) REFERENCES episodes(script_id)`
+
+表关系：
+
+- `episode_subject_images.subject_item_id -> episode_subject_items.id`
+- `episode_subject_images.script_id -> episodes.script_id`
+- 同一个主体可以有多条图片生成历史记录，前端轮询和历史图片列表都从这张表读取
+
 ## 迁移元数据表
 
 以下两张表不是业务表，而是当前项目迁移系统自维护的元数据表。
@@ -192,4 +253,6 @@
 - `apps/server/services/z-meng_backEnd/src/internal/data/migrations/ai_prompt_templates_and_llm_call_logs.sql`
 - `apps/server/services/z-meng_backEnd/src/internal/data/migrations/extract_subjects_prompt_template.sql`
 - `apps/server/services/z-meng_backEnd/src/internal/data/migrations/episode_subjects.sql`
+- `apps/server/services/z-meng_backEnd/src/internal/data/migrations/episode_subject_items.sql`
+- `apps/server/services/z-meng_backEnd/src/internal/data/migrations/episode_subject_images.sql`
 - `apps/server/services/z-meng_backEnd/src/pkg/migrate/migrate.ts`

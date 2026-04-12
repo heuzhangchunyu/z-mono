@@ -27,6 +27,8 @@ export interface AIConfig {
   provider: 'dashscope';
   baseUrl: string;
   model: string;
+  imageBaseUrl: string;
+  imageModel: string;
   apiKey: string;
   timeoutMs: number;
 }
@@ -63,6 +65,8 @@ interface RawConfig {
     provider?: 'dashscope';
     base_url?: string;
     model?: string;
+    image_base_url?: string;
+    image_model?: string;
     api_key?: string;
     timeout_ms?: number;
   };
@@ -99,6 +103,8 @@ export function loadConfig(configPath?: string): Config {
       provider: raw.ai?.provider ?? 'dashscope',
       baseUrl: raw.ai?.base_url ?? 'https://dashscope.aliyuncs.com/compatible-mode/v1',
       model: raw.ai?.model ?? 'qwen3.6-plus',
+      imageBaseUrl: raw.ai?.image_base_url ?? 'https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation',
+      imageModel: raw.ai?.image_model ?? 'qwen-image-2.0-pro',
       apiKey: raw.ai?.api_key ?? '',
       timeoutMs: raw.ai?.timeout_ms ?? 120000
     }
@@ -152,9 +158,11 @@ function applyEnvOverrides(config: Config): Config {
     },
     ai: {
       provider: 'dashscope',
-      baseUrl: process.env.DASHSCOPE_BASE_URL ?? config.ai.baseUrl,
-      model: process.env.DASHSCOPE_MODEL ?? config.ai.model,
-      apiKey: process.env.DASHSCOPE_API_KEY ?? config.ai.apiKey,
+      baseUrl: pickString(process.env.DASHSCOPE_BASE_URL, config.ai.baseUrl),
+      model: pickString(process.env.DASHSCOPE_MODEL, config.ai.model),
+      imageBaseUrl: pickString(process.env.DASHSCOPE_IMAGE_BASE_URL, config.ai.imageBaseUrl),
+      imageModel: pickString(process.env.DASHSCOPE_IMAGE_MODEL, config.ai.imageModel),
+      apiKey: pickString(process.env.DASHSCOPE_API_KEY, config.ai.apiKey),
       timeoutMs: parseNumber(process.env.DASHSCOPE_TIMEOUT_MS, config.ai.timeoutMs)
     }
   };
@@ -175,4 +183,8 @@ function parseBoolean(value: string | undefined, fallback: boolean): boolean {
   }
 
   return ['1', 'true', 'yes', 'on'].includes(value.toLowerCase());
+}
+
+function pickString(value: string | undefined, fallback: string): string {
+  return value && value.trim() ? value : fallback;
 }

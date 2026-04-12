@@ -241,3 +241,214 @@ WHERE NOT EXISTS (...);
 
 - [extract_subjects_prompt_template.sql](/Users/zhangchunyu/Desktop/绘塔/z-mono/apps/server/services/z-meng_backEnd/src/internal/data/migrations/extract_subjects_prompt_template.sql)
 - [ai_prompt_templates_and_llm_call_logs.sql](/Users/zhangchunyu/Desktop/绘塔/z-mono/apps/server/services/z-meng_backEnd/src/internal/data/migrations/ai_prompt_templates_and_llm_call_logs.sql)
+
+## `CREATE TABLE IF NOT EXISTS`
+
+含义：
+创建一张新表；如果这张表已经存在，就跳过，不报错。
+
+基础结构：
+
+```sql
+CREATE TABLE IF NOT EXISTS 表名 (
+  字段定义1,
+  字段定义2,
+  约束定义
+);
+```
+
+这类语法通常出现在：
+
+- 新增业务表
+- 新增中间表
+- 新增明细表
+
+在 `z-meng` 里，主体明细表就是一个典型例子：
+
+```sql
+CREATE TABLE IF NOT EXISTS episode_subject_items (
+    id BIGSERIAL PRIMARY KEY,
+    script_id BIGINT NOT NULL,
+    subject_type VARCHAR(20) NOT NULL,
+    subject_name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_episode_subject_items_script_id
+      FOREIGN KEY (script_id)
+      REFERENCES episodes(script_id)
+      ON DELETE CASCADE,
+    CONSTRAINT chk_episode_subject_items_type
+      CHECK (subject_type IN ('character', 'scene', 'prop'))
+);
+```
+
+## 字段定义
+
+### `id BIGSERIAL PRIMARY KEY`
+
+含义：
+
+- `id` 是这一行记录的唯一标识
+- `BIGSERIAL` 表示数据库自动生成递增大整数
+- `PRIMARY KEY` 表示主键，不能重复，也不能为空
+
+在 `episode_subject_items` 里：
+
+- 每个主体都有独立 `id`
+- 以后查询某个主体的图片历史，就可以通过这个 `id` 关联
+
+### `script_id BIGINT NOT NULL`
+
+含义：
+
+- `script_id` 是大整数
+- `NOT NULL` 表示必填
+
+在你们项目里：
+
+- `script_id` 同时就是“剧集 id / 剧本 id”
+
+也就是说这个字段表示：
+这个主体属于哪一个剧集。
+
+### `subject_type VARCHAR(20) NOT NULL`
+
+含义：
+
+- `VARCHAR(20)` 表示最长 20 个字符的字符串
+- `NOT NULL` 表示不能为空
+
+这里用来存主体类型，比如：
+
+- `character`
+- `scene`
+- `prop`
+
+### `subject_name VARCHAR(255) NOT NULL`
+
+含义：
+
+- 主体名称
+- 最长 255 个字符
+- 不能为空
+
+例如：
+
+- `林夏`
+- `天台`
+- `录音笔`
+
+### `created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`
+
+含义：
+
+- `TIMESTAMPTZ` 表示带时区时间
+- `NOT NULL` 表示不能为空
+- `DEFAULT NOW()` 表示默认取当前时间
+
+这个字段记录：
+这条数据是什么时候创建的。
+
+### `updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`
+
+含义：
+
+- 也是带时区时间
+- 默认当前时间
+
+这个字段记录：
+这条数据最近一次更新时间。
+
+## `CONSTRAINT`
+
+含义：
+给约束起一个明确名字，方便后续排查、维护和阅读。
+
+基础结构：
+
+```sql
+CONSTRAINT 约束名 约束内容
+```
+
+这样做的好处是：
+
+- 约束名称清晰
+- 报错时更容易定位
+- 后续如果要删除或修改约束更方便
+
+## `FOREIGN KEY`
+
+示例：
+
+```sql
+CONSTRAINT fk_episode_subject_items_script_id
+  FOREIGN KEY (script_id)
+  REFERENCES episodes(script_id)
+  ON DELETE CASCADE
+```
+
+含义：
+
+- 当前表的 `script_id`
+- 必须引用 `episodes` 表里已经存在的 `script_id`
+
+也就是说：
+不能插入一个“没有对应剧集”的主体。
+
+### `ON DELETE CASCADE`
+
+含义：
+如果主表里的那条剧集被删除了，当前表里关联的主体记录也自动删除。
+
+这样可以避免出现“孤儿数据”。
+
+## `CHECK`
+
+示例：
+
+```sql
+CONSTRAINT chk_episode_subject_items_type
+  CHECK (subject_type IN ('character', 'scene', 'prop'))
+```
+
+含义：
+限制某个字段的取值范围。
+
+这里表示：
+
+- `subject_type` 只能是 `character`
+- 或 `scene`
+- 或 `prop`
+
+不能写成其他无效值。
+
+这种写法的作用是：
+
+- 保证数据规范
+- 避免脏数据
+- 让后端和前端都能稳定依赖这个枚举值
+
+## 整段 SQL 的整体含义
+
+上面这段 `CREATE TABLE` SQL 整体可以理解成：
+
+1. 创建一张“主体明细表”
+2. 每个主体一条记录
+3. 每条记录都有自己的主体 `id`
+4. 每个主体都属于某个剧集 `script_id`
+5. 每个主体都有类型和名称
+6. 类型值被限制在 `character / scene / prop`
+7. 剧集被删除时，主体记录自动一起删除
+
+## 在 `z-meng` 里的典型用途
+
+目前这类建表语法主要用于：
+
+- 新增主体明细表
+- 为后续“主体图片生成历史”提供稳定的主体 id
+- 将原本数组结构的主体信息，升级为真正可关联的实体记录
+
+相关文件参考：
+
+- [episode_subject_items.sql](/Users/zhangchunyu/Desktop/绘塔/z-mono/apps/server/services/z-meng_backEnd/src/internal/data/migrations/episode_subject_items.sql)
+- [episodes.sql](/Users/zhangchunyu/Desktop/绘塔/z-mono/apps/server/services/z-meng_backEnd/src/internal/data/migrations/episodes.sql)

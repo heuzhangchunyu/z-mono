@@ -1,9 +1,10 @@
 import type { Pool } from 'pg';
 
-import { createTextGenerationProvider } from '../ai/factory.js';
+import { createImageGenerationProvider, createTextGenerationProvider } from '../ai/factory.js';
 import type { Config } from '../config/config.js';
 import { EpisodeRepository } from '../repository/episode.js';
 import { EpisodeSubjectRepository } from '../repository/episodeSubject.js';
+import { EpisodeSubjectImageRepository } from '../repository/episodeSubjectImage.js';
 import { LLMCallLogRepository } from '../repository/llmCallLog.js';
 import { createDatabasePool } from '../repository/postgres.js';
 import { PromptTemplateRepository } from '../repository/promptTemplate.js';
@@ -12,6 +13,7 @@ import { AIChatService } from '../service/aiChatService.js';
 import { AuthService } from '../service/authService.js';
 import { EpisodeService } from '../service/episodeService.js';
 import { EpisodeSubjectService } from '../service/episodeSubjectService.js';
+import { EpisodeSubjectImageService } from '../service/episodeSubjectImageService.js';
 import { LLMCallLogService } from '../service/llmCallLogService.js';
 import { PromptTemplateService } from '../service/promptTemplateService.js';
 
@@ -20,6 +22,7 @@ export interface AppDependencies {
   authService: AuthService;
   episodeService: EpisodeService;
   episodeSubjectService: EpisodeSubjectService;
+  episodeSubjectImageService: EpisodeSubjectImageService;
   aiChatService: AIChatService;
 }
 
@@ -30,6 +33,7 @@ export async function createDependencies(config: Config): Promise<AppDependencie
   const userRepository = new UserRepository(database);
   const episodeRepository = new EpisodeRepository(database);
   const episodeSubjectRepository = new EpisodeSubjectRepository(database);
+  const episodeSubjectImageRepository = new EpisodeSubjectImageRepository(database);
   const promptTemplateRepository = new PromptTemplateRepository(database);
   const llmCallLogRepository = new LLMCallLogRepository(database);
 
@@ -47,12 +51,19 @@ export async function createDependencies(config: Config): Promise<AppDependencie
     episodeSubjectRepository,
     aiChatService
   );
+  const episodeSubjectImageService = new EpisodeSubjectImageService(
+    episodeSubjectRepository,
+    episodeSubjectImageRepository,
+    createImageGenerationProvider(config.ai),
+    config.ai.imageModel
+  );
 
   return {
     database,
     authService,
     episodeService,
     episodeSubjectService,
+    episodeSubjectImageService,
     aiChatService
   };
 }

@@ -7,9 +7,11 @@ import type {
   UpdateEpisodeScriptPayload,
   UpdateEpisodeStagePayload
 } from '../model/episode.js';
+import type { CreateEpisodeSubjectImagePayload } from '../model/episodeSubjectImage.js';
 import { AuthService } from '../service/authService.js';
 import { EpisodeService } from '../service/episodeService.js';
 import { EpisodeSubjectService } from '../service/episodeSubjectService.js';
+import { EpisodeSubjectImageService } from '../service/episodeSubjectImageService.js';
 
 export function createCreateEpisodeHandler(authService: AuthService, episodeService: EpisodeService): Koa.Middleware {
   return async (ctx) => {
@@ -100,6 +102,42 @@ export function createExtractEpisodeSubjectsHandler(
   };
 }
 
+// Returns one subject item's image generation history and the latest top-level status for polling.
+export function createGetEpisodeSubjectImagesHandler(
+  authService: AuthService,
+  episodeSubjectImageService: EpisodeSubjectImageService
+): Koa.Middleware {
+  return async (ctx) => {
+    const subjectItemId = readSubjectItemId(ctx);
+    const user = await authService.requireActiveUser(readAuthenticatedUserId(ctx));
+    const feed = await episodeSubjectImageService.getSubjectImageFeed(subjectItemId, user.id);
+
+    ctx.status = 200;
+    ctx.body = {
+      data: feed
+    };
+  };
+}
+
+// Starts one subject image generation task and immediately returns the persisted processing record.
+export function createGenerateEpisodeSubjectImageHandler(
+  authService: AuthService,
+  episodeSubjectImageService: EpisodeSubjectImageService
+): Koa.Middleware {
+  return async (ctx) => {
+    const subjectItemId = readSubjectItemId(ctx);
+    const payload = await readJsonBody<CreateEpisodeSubjectImagePayload>(ctx);
+    const user = await authService.requireActiveUser(readAuthenticatedUserId(ctx));
+    const record = await episodeSubjectImageService.triggerSubjectImageGeneration(subjectItemId, user.id, payload);
+
+    ctx.status = 202;
+    ctx.body = {
+      message: 'Subject image generation started.',
+      data: record
+    };
+  };
+}
+
 function readEpisodeId(ctx: Koa.Context): number {
   const rawEpisodeId = ctx.params.episodeId?.trim() ?? '';
   const episodeId = Number(rawEpisodeId);
@@ -109,4 +147,16 @@ function readEpisodeId(ctx: Koa.Context): number {
   }
 
   return episodeId;
+}
+
+// Reads and validates the normalized subject item id used by the subject image APIs.
+function readSubjectItemId(ctx: Koa.Context): number {
+  const rawSubjectItemId = ctx.params.subjectItemId?.trim() ?? '';
+  const subjectItemId = Number(rawSubjectItemId);
+
+  if (!Number.isInteger(subjectItemId) || subjectItemId <= 0) {
+    throw createBadRequestError('A valid subject item ID is required.');
+  }
+
+  return subjectItemId;
 }

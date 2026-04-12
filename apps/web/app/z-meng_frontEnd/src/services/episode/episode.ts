@@ -1,5 +1,14 @@
 import request from '../../lib/request/request';
 
+export interface EpisodeSubjectItem {
+  id: number;
+  scriptId: number;
+  subjectType: 'character' | 'scene' | 'prop';
+  subjectName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CreateEpisodePayload {
   episodeName: string;
   style: '动漫' | '真人';
@@ -22,12 +31,33 @@ export interface EpisodeItem {
 export interface EpisodeSubjectsItem {
   scriptId: number;
   status: 'waiting' | 'processing' | 'success' | 'failed';
+  items: EpisodeSubjectItem[];
   characters: string[];
   scenes: string[];
   props: string[];
   errorMessage: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface EpisodeSubjectImageRecord {
+  id: number;
+  subjectItemId: number;
+  scriptId: number;
+  subjectType: 'character' | 'scene' | 'prop';
+  subjectName: string;
+  prompt: string;
+  imageUrl: string | null;
+  status: 'waiting' | 'processing' | 'success' | 'failed';
+  errorMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EpisodeSubjectImageFeed {
+  subjectItemId: number;
+  status: 'waiting' | 'processing' | 'success' | 'failed';
+  records: EpisodeSubjectImageRecord[];
 }
 
 interface CreateEpisodeResponse {
@@ -56,6 +86,15 @@ interface EpisodeSubjectsResponse {
 interface TriggerEpisodeSubjectsExtractionResponse {
   message: string;
   data: EpisodeSubjectsItem;
+}
+
+interface EpisodeSubjectImageFeedResponse {
+  data: EpisodeSubjectImageFeed;
+}
+
+interface GenerateEpisodeSubjectImageResponse {
+  message: string;
+  data: EpisodeSubjectImageRecord;
 }
 
 export async function createEpisode(payload: CreateEpisodePayload) {
@@ -92,5 +131,18 @@ export async function getEpisodeSubjects(scriptId: number) {
 
 export async function triggerEpisodeSubjectsExtraction(scriptId: number) {
   const response = await request.post<TriggerEpisodeSubjectsExtractionResponse>(`/episodes/${scriptId}/subjects/extract`);
+  return response.data;
+}
+
+export async function getEpisodeSubjectImages(subjectItemId: number) {
+  const response = await request.get<EpisodeSubjectImageFeedResponse>(`/episodes/subject-items/${subjectItemId}/images`);
+  return response.data;
+}
+
+export async function generateEpisodeSubjectImage(subjectItemId: number, prompt: string) {
+  const response = await request.post<GenerateEpisodeSubjectImageResponse>(
+    `/episodes/subject-items/${subjectItemId}/images/generate`,
+    { prompt }
+  );
   return response.data;
 }

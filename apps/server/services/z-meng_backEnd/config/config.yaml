@@ -21,5 +21,7 @@ ai:
   provider: dashscope
   base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
   model: qwen3.6-plus
+  image_base_url: https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation
+  image_model: qwen-image-2.0-pro
   api_key: "sk-4cf9a21b0dbc4634af5db628bf1e35e2"
   timeout_ms: 120000

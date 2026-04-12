@@ -1,10 +1,15 @@
-import { Alert, Button, Input, Skeleton, Typography, message } from 'antd';
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Alert, Button, Input, Modal, Skeleton, Typography, message } from 'antd';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
+  generateEpisodeSubjectImage,
+  getEpisodeSubjectImages,
   getEpisodeSubjects,
   listEpisodes,
   type EpisodeItem,
+  type EpisodeSubjectImageFeed,
+  type EpisodeSubjectImageRecord,
+  type EpisodeSubjectItem,
   type EpisodeSubjectsItem,
   triggerEpisodeSubjectsExtraction,
   updateEpisodeScript,
@@ -76,6 +81,7 @@ export default function EpisodeStudio() {
   const [subjectState, setSubjectState] = useState<EpisodeSubjectsItem | null>(null);
   const [subjectLoading, setSubjectLoading] = useState(false);
   const [triggeringSubjectExtraction, setTriggeringSubjectExtraction] = useState(false);
+  const [activeSubjectItem, setActiveSubjectItem] = useState<EpisodeSubjectItem | null>(null);
   const [messageApi, contextHolder] = message.useMessage();
 
   useEffect(() => {
@@ -193,6 +199,10 @@ export default function EpisodeStudio() {
     void triggerSubjectExtraction();
   };
 
+  const handleOpenSubjectStudio = (subjectItem: EpisodeSubjectItem) => {
+    setActiveSubjectItem(subjectItem);
+  };
+
   const loadSubjectState = async (scriptId: number, silent = false) => {
     try {
       if (!silent) {
@@ -299,6 +309,7 @@ export default function EpisodeStudio() {
                     subjectState={subjectState}
                     subjectLoading={subjectLoading}
                     isTriggeringSubjectExtraction={triggeringSubjectExtraction}
+                    onOpenSubjectStudio={handleOpenSubjectStudio}
                     onComplete={() => void markStageCompleted(stage.key)}
                     onScriptNext={handleScriptNext}
                     onExtractSubjects={handleExtractSubjects}
@@ -310,6 +321,11 @@ export default function EpisodeStudio() {
           </Routes>
         ) : null}
       </section>
+
+      <SubjectCreationModal
+        subjectItem={activeSubjectItem}
+        onClose={() => setActiveSubjectItem(null)}
+      />
     </section>
   );
 }
@@ -324,6 +340,7 @@ interface EpisodeStagePanelProps {
   subjectState: EpisodeSubjectsItem | null;
   subjectLoading: boolean;
   isTriggeringSubjectExtraction: boolean;
+  onOpenSubjectStudio: (subjectItem: EpisodeSubjectItem) => void;
   onComplete: () => void;
   onScriptNext: (scriptContent: string) => Promise<void>;
   onExtractSubjects: () => void;
@@ -339,6 +356,7 @@ function EpisodeStagePanel({
   subjectState,
   subjectLoading,
   isTriggeringSubjectExtraction,
+  onOpenSubjectStudio,
   onComplete,
   onScriptNext,
   onExtractSubjects
@@ -396,7 +414,7 @@ function EpisodeStagePanel({
                 </Typography.Title>
 
                 <div className="zmeng-episode-studio__subject-cards">
-                  {renderSubjectCards(section, subjectState, isSubjectProcessing)}
+                  {renderSubjectCards(section, subjectState, isSubjectProcessing, onOpenSubjectStudio)}
                 </div>
               </section>
             ))}
@@ -489,7 +507,8 @@ function getSectionItems(sectionKey: SubjectSectionKey, subjectState: EpisodeSub
 function renderSubjectCards(
   section: SubjectSection,
   subjectState: EpisodeSubjectsItem | null,
-  isSubjectProcessing: boolean
+  isSubjectProcessing: boolean,
+  onOpenSubjectStudio: (subjectItem: EpisodeSubjectItem) => void
 ) {
   if (isSubjectProcessing) {
     return (
@@ -502,12 +521,16 @@ function renderSubjectCards(
     );
   }
 
-  const sectionItems = getSectionItems(section.key, subjectState);
+  const sectionItems = getSectionSubjectItems(section.key, subjectState);
   if (sectionItems.length > 0) {
     return sectionItems.map((item) => (
-      <article key={`${section.key}-${item}`} className="zmeng-episode-studio__asset-card">
-        <div className="zmeng-episode-studio__asset-card-image">主体图占位</div>
-        <div className="zmeng-episode-studio__asset-card-name">{item}</div>
+      <article key={item.id} className="zmeng-episode-studio__asset-card">
+        <div className="zmeng-episode-studio__asset-card-image">
+          <Button type="default" onClick={() => onOpenSubjectStudio(item)}>
+            创作主体
+          </Button>
+        </div>
+        <div className="zmeng-episode-studio__asset-card-name">{item.subjectName}</div>
       </article>
     ));
   }
@@ -518,4 +541,249 @@ function renderSubjectCards(
       <div className="zmeng-episode-studio__asset-card-name">{section.placeholderName}</div>
     </article>
   );
+}
+
+function getSectionSubjectItems(
+  sectionKey: SubjectSectionKey,
+  subjectState: EpisodeSubjectsItem | null
+): EpisodeSubjectItem[] {
+  if (!subjectState) {
+    return [];
+  }
+
+  const subjectType = sectionKey === 'character' ? 'character' : sectionKey === 'scene' ? 'scene' : 'prop';
+  return subjectState.items.filter((item) => item.subjectType === subjectType);
+}
+
+interface SubjectCreationModalProps {
+  subjectItem: EpisodeSubjectItem | null;
+  onClose: () => void;
+}
+
+function SubjectCreationModal({ subjectItem, onClose }: SubjectCreationModalProps) {
+  const [promptDraft, setPromptDraft] = useState('');
+  const [imageFeed, setImageFeed] = useState<EpisodeSubjectImageFeed | null>(null);
+  const [loadingImageFeed, setLoadingImageFeed] = useState(false);
+  const [generatingImage, setGeneratingImage] = useState(false);
+  const [messageApi, contextHolder] = message.useMessage();
+  const messageListRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setPromptDraft('');
+    setImageFeed(null);
+  }, [subjectItem?.id]);
+
+  useEffect(() => {
+    if (!subjectItem) {
+      return;
+    }
+
+    void loadImageFeed(subjectItem.id);
+  }, [subjectItem?.id]);
+
+  useEffect(() => {
+    if (!subjectItem || imageFeed?.status !== 'processing') {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      void loadImageFeed(subjectItem.id, true);
+    }, 2000);
+
+    return () => window.clearInterval(timer);
+  }, [subjectItem, imageFeed?.status]);
+
+  useEffect(() => {
+    if (!subjectItem) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      const container = messageListRef.current;
+      if (!container) {
+        return;
+      }
+
+      container.scrollTop = container.scrollHeight;
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [subjectItem?.id, imageFeed?.records.length, imageFeed?.status]);
+
+  const loadImageFeed = async (subjectItemId: number, silent = false) => {
+    try {
+      if (!silent) {
+        setLoadingImageFeed(true);
+      }
+
+      const response = await getEpisodeSubjectImages(subjectItemId);
+      setImageFeed(response.data);
+    } catch (error) {
+      console.error('Failed to load subject image feed.', error);
+      if (!silent) {
+        messageApi.error('主体图片历史加载失败');
+      }
+    } finally {
+      if (!silent) {
+        setLoadingImageFeed(false);
+      }
+    }
+  };
+
+  const handleGenerateImage = async () => {
+    if (!subjectItem || generatingImage) {
+      return;
+    }
+
+    const prompt = promptDraft.trim();
+    if (!prompt) {
+      messageApi.warning('请先输入生图要求');
+      return;
+    }
+
+    try {
+      setGeneratingImage(true);
+      await generateEpisodeSubjectImage(subjectItem.id, prompt);
+      setPromptDraft('');
+      await loadImageFeed(subjectItem.id, true);
+    } catch (error) {
+      console.error('Failed to trigger subject image generation.', error);
+      messageApi.error('主体生图触发失败');
+    } finally {
+      setGeneratingImage(false);
+    }
+  };
+
+  const historyRecords = useMemo(
+    () => (imageFeed?.records ?? []).filter((record) => record.status === 'success' && Boolean(record.imageUrl)),
+    [imageFeed?.records]
+  );
+
+  return (
+    <Modal
+      open={Boolean(subjectItem)}
+      onCancel={onClose}
+      footer={null}
+      width={1240}
+      className="zmeng-episode-studio__subject-modal"
+      title={subjectItem ? `${subjectItem.subjectName} · 主体创作` : '主体创作'}
+      destroyOnHidden
+    >
+      {contextHolder}
+      {subjectItem ? (
+        <div className="zmeng-episode-studio__subject-modal-layout">
+          <section className="zmeng-episode-studio__subject-modal-panel zmeng-episode-studio__subject-modal-panel--history">
+            <Typography.Title level={4} className="zmeng-episode-studio__subject-modal-title">
+              历史生成图片
+            </Typography.Title>
+            <div className="zmeng-episode-studio__subject-history-list">
+              {loadingImageFeed ? (
+                <Skeleton active paragraph={{ rows: 6 }} />
+              ) : historyRecords.length ? (
+                historyRecords.map((record) => (
+                  <article key={record.id} className="zmeng-episode-studio__subject-history-card">
+                    <img
+                      src={record.imageUrl ?? ''}
+                      alt={`${record.subjectName} 历史生成图 ${record.id}`}
+                      className="zmeng-episode-studio__subject-history-image"
+                    />
+                    <p className="zmeng-episode-studio__subject-history-prompt">{record.prompt}</p>
+                  </article>
+                ))
+              ) : (
+                <div className="zmeng-episode-studio__subject-history-empty">
+                  暂无历史图片
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section className="zmeng-episode-studio__subject-modal-panel zmeng-episode-studio__subject-modal-panel--creation">
+            <Typography.Title level={4} className="zmeng-episode-studio__subject-modal-title">
+              创作主体
+            </Typography.Title>
+            <div className="zmeng-episode-studio__subject-creation-layout">
+              <section ref={messageListRef} className="zmeng-episode-studio__subject-message-list">
+                {renderSubjectImageMessages(subjectItem.subjectName, imageFeed)}
+              </section>
+
+              <section className="zmeng-episode-studio__subject-prompt-editor">
+                <Typography.Title level={5} className="zmeng-episode-studio__subject-prompt-title">
+                  生图要求输入区
+                </Typography.Title>
+                <Input.TextArea
+                  value={promptDraft}
+                  onChange={(event) => setPromptDraft(event.target.value)}
+                  placeholder="请输入该主体的生图要求..."
+                  className="zmeng-episode-studio__subject-prompt-textarea"
+                  autoSize={false}
+                />
+                <div className="zmeng-episode-studio__subject-prompt-actions">
+                  <Button
+                    type="primary"
+                    size="large"
+                    loading={generatingImage || imageFeed?.status === 'processing'}
+                    onClick={() => void handleGenerateImage()}
+                  >
+                    发送
+                  </Button>
+                </div>
+              </section>
+            </div>
+          </section>
+        </div>
+      ) : null}
+    </Modal>
+  );
+}
+
+function renderSubjectImageMessages(subjectName: string, imageFeed: EpisodeSubjectImageFeed | null) {
+  if (!imageFeed?.records.length) {
+    return (
+      <div className="zmeng-episode-studio__subject-message-item is-system">
+        <span className="zmeng-episode-studio__subject-message-role">系统</span>
+        <p>这里会展示“{subjectName}”的生图要求、生成中状态和最终图片结果。</p>
+      </div>
+    );
+  }
+
+  return [...imageFeed.records].reverse().flatMap((record) => [
+    (
+      <div key={`prompt-${record.id}`} className="zmeng-episode-studio__subject-message-item is-user">
+        <span className="zmeng-episode-studio__subject-message-role">你</span>
+        <p>{record.prompt}</p>
+      </div>
+    ),
+    (
+      <div key={`result-${record.id}`} className="zmeng-episode-studio__subject-message-item is-system">
+        <span className="zmeng-episode-studio__subject-message-role">系统</span>
+        <SubjectImageMessageBody record={record} />
+      </div>
+    )
+  ]);
+}
+
+function SubjectImageMessageBody({ record }: { record: EpisodeSubjectImageRecord }) {
+  if (record.status === 'processing') {
+    return <p>正在根据当前生图要求生成图片，请稍候...</p>;
+  }
+
+  if (record.status === 'failed') {
+    return <p>{record.errorMessage ?? '主体生图失败，请稍后重试。'}</p>;
+  }
+
+  if (record.status === 'success' && record.imageUrl) {
+    return (
+      <div className="zmeng-episode-studio__subject-message-result">
+        <img
+          src={record.imageUrl}
+          alt={`${record.subjectName} 生成图 ${record.id}`}
+          className="zmeng-episode-studio__subject-message-image"
+        />
+        <p className="zmeng-episode-studio__subject-message-caption">本次生图要求：{record.prompt}</p>
+      </div>
+    );
+  }
+
+  return <p>等待主体生图任务开始。</p>;
 }

@@ -43,3 +43,22 @@ export interface TextGenerationProvider {
   generateText(input: TextGenerationInput): Promise<TextGenerationResult>;
   streamText(input: TextGenerationInput): AsyncIterable<TextGenerationStreamEvent>;
 }
+
+export interface ImageGenerationInput {
+  prompt: string;
+  model?: string;
+  size: string;
+  signal?: AbortSignal;
+}
+
+export interface ImageGenerationResult {
+  imageUrl: string;
+  model: string;
+  revisedPrompt: string | null;
+}
+
+export interface ImageGenerationProvider {
+  getProviderName(): string;
+  isConfigured(): boolean;
+  generateImage(input: ImageGenerationInput): Promise<ImageGenerationResult>;
+}

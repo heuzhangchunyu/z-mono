@@ -3,6 +3,9 @@ import axios from 'axios';
 import type { AIConfig } from '../config/config.js';
 import { createHttpError } from '../http/body.js';
 import type {
+  ImageGenerationInput,
+  ImageGenerationProvider,
+  ImageGenerationResult,
   TextGenerationInput,
   TextGenerationProvider,
   TextGenerationResult,
@@ -36,7 +39,27 @@ interface DashScopeChatCompletionResponse {
   usage?: DashScopeUsage;
 }
 
-export class DashScopeClient implements TextGenerationProvider {
+interface DashScopeImageGenerationResultItem {
+  image?: string;
+}
+
+interface DashScopeImageGenerationChoice {
+  message?: {
+    content?: DashScopeImageGenerationResultItem[];
+  };
+}
+
+interface DashScopeImageGenerationResponse {
+  output?: {
+    choices?: DashScopeImageGenerationChoice[];
+  };
+  usage?: {
+    image_count?: number;
+  };
+  request_id?: string;
+}
+
+export class DashScopeClient implements TextGenerationProvider, ImageGenerationProvider {
   constructor(private readonly config: AIConfig) {}
 
   getProviderName(): string {
@@ -220,6 +243,69 @@ export class DashScopeClient implements TextGenerationProvider {
     } finally {
       clearTimeout(timeoutId);
       cleanupExternalAbort();
+    }
+  }
+
+  // Generates one image using DashScope's image generation endpoint and returns the first output URL.
+  async generateImage(input: ImageGenerationInput): Promise<ImageGenerationResult> {
+    if (!this.isConfigured()) {
+      throw createHttpError(503, 'DashScope API key is not configured.');
+    }
+
+    try {
+      const response = await axios.post<DashScopeImageGenerationResponse>(
+        this.config.imageBaseUrl,
+        {
+          model: input.model ?? this.config.imageModel,
+          input: {
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  {
+                    text: input.prompt
+                  }
+                ]
+              }
+            ]
+          },
+          parameters: {
+            size: input.size
+          }
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${this.config.apiKey}`,
+            'Content-Type': 'application/json',
+            'X-DashScope-Async': 'disable'
+          },
+          timeout: this.config.timeoutMs,
+          signal: input.signal
+        }
+      );
+
+      const imageUrl = response.data.output?.choices?.[0]?.message?.content?.[0]?.image?.trim() ?? '';
+      if (!imageUrl) {
+        throw createHttpError(502, 'DashScope returned an empty image result.');
+      }
+
+      return {
+        imageUrl,
+        model: input.model ?? this.config.imageModel,
+        revisedPrompt: input.prompt
+      };
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.code === 'ECONNABORTED') {
+          throw createHttpError(504, `DashScope request timed out after ${this.config.timeoutMs}ms.`);
+        }
+
+        const status = error.response?.status;
+        const upstreamMessage = readDashScopeErrorMessage(error.response?.data);
+        throw createHttpError(status === 400 || status === 401 || status === 403 ? status : 502, upstreamMessage);
+      }
+
+      throw error;
     }
   }
 

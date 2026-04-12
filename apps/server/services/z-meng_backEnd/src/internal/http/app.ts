@@ -33,7 +33,8 @@ export function createApp(input: CreateAppInput): Koa {
   const episodesRouter = createEpisodesRouter({
     authService: input.dependencies.authService,
     episodeService: input.dependencies.episodeService,
-    episodeSubjectService: input.dependencies.episodeSubjectService
+    episodeSubjectService: input.dependencies.episodeSubjectService,
+    episodeSubjectImageService: input.dependencies.episodeSubjectImageService
   });
   const aiRouter = createAIRouter({
     authService: input.dependencies.authService,
