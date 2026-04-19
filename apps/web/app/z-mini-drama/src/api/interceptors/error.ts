@@ -2,10 +2,15 @@ import type { AxiosError } from 'axios';
 
 interface ErrorPayload {
   message?: string;
+  error?: string;
 }
 
 export function createErrorMessage(error: AxiosError<unknown>) {
   const responseData = error.response?.data as ErrorPayload | undefined;
+
+  if (responseData?.error) {
+    return responseData.error;
+  }
 
   if (responseData?.message) {
     return responseData.message;

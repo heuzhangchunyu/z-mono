@@ -9,12 +9,11 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 COPY package.json ./
 COPY tsconfig.json ./
 COPY src ./src
-COPY migrations ./migrations
 COPY config ./config
 COPY docs ./docs
 
 RUN pnpm install --no-frozen-lockfile
-RUN pnpm build
+RUN pnpm migrations && pnpm build
 
 ENV NODE_ENV=production
 ENV PORT=4102

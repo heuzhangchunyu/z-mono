@@ -30,7 +30,7 @@ function getVendorChunkName(id: string) {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const proxyTarget = env.VITE_PROXY_TARGET ?? 'http://127.0.0.1:4101';
+  const proxyTarget = env.VITE_PROXY_TARGET ?? 'http://127.0.0.1:4102';
 
   return {
     plugins: [react()],

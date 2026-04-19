@@ -9,7 +9,9 @@ src/
   api/
   components/
   hooks/
+  lib/
   pages/
+  services/
   styles/
   types/
 ```
@@ -25,3 +27,11 @@ pnpm dev
 
 - `VITE_API_BASE_URL`: axios 默认请求前缀
 - `VITE_PROXY_TARGET`: Vite 开发代理目标地址
+
+## 当前登录链路
+
+- 登录页视觉参考即梦首页的明亮渐变与玻璃卡片气质
+- `POST /api/auth/login` 获取 Bearer Token
+- `POST /api/auth/register` 注册并自动登录
+- `GET /api/user/current` 校验当前登录态
+- 默认演示账号：`demo_admin / demo123456`

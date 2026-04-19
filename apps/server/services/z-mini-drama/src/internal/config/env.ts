@@ -4,6 +4,7 @@ export interface AppConfig {
   serviceName: string;
   version: string;
   database: DatabaseConfig;
+  auth: AuthConfig;
 }
 
 export interface DatabaseConfig {
@@ -13,6 +14,11 @@ export interface DatabaseConfig {
   user: string;
   password: string;
   ssl: boolean;
+}
+
+export interface AuthConfig {
+  jwtSecret: string;
+  tokenExpireHours: number;
 }
 
 function readNumberEnv(name: string, fallback: number) {
@@ -39,6 +45,10 @@ export function loadAppConfig(): AppConfig {
       user: process.env.DB_USER ?? 'postgres',
       password: process.env.DB_PASSWORD ?? 'postgres',
       ssl: process.env.DB_SSL === 'true'
+    },
+    auth: {
+      jwtSecret: process.env.AUTH_JWT_SECRET ?? 'z-mini-drama-dev-secret',
+      tokenExpireHours: readNumberEnv('AUTH_TOKEN_EXPIRE_HOURS', 12)
     }
   };
 }

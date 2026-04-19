@@ -7,10 +7,13 @@
     "dev": "tsx watch src/cmd/server.ts",
     "build": "rm -rf dist && tsc -p tsconfig.json",
     "start": "node dist/cmd/server.js",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "migrations": "node --import tsx src/internal/data/genmig.ts --outdir src/internal/data/migrations/autogen src/internal/data/migrations"
   },
   "dependencies": {
     "@koa/cors": "^5.0.0",
+    "@koa/router": "^15.4.0",
+    "jose": "^6.2.2",
     "koa": "^2.16.1",
     "pg": "^8.13.1"
   },

@@ -1,27 +1,55 @@
-import { ConfigProvider } from 'antd';
+import { App as AntdApp, ConfigProvider } from 'antd';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import PublicOnlyRoute from '@/components/PublicOnlyRoute';
 import DashboardPage from '@/pages/Dashboard';
+import EpisodeCreationPage from '@/pages/Dashboard/EpisodeCreationPage';
+import InfiniteCanvasPage from '@/pages/Dashboard/InfiniteCanvasPage';
+import LoginPage from '@/pages/Login';
 
 const theme = {
   token: {
-    colorPrimary: '#1677ff',
-    borderRadius: 16,
-    colorBgLayout: '#f5f7fb',
+    colorPrimary: '#5a61ff',
+    colorInfo: '#5a61ff',
+    borderRadius: 20,
+    colorBgLayout: '#f4f6ff',
     colorBgContainer: '#ffffff',
-    fontFamily: "'PingFang SC', 'Microsoft YaHei', sans-serif"
+    colorText: '#131b39',
+    colorTextSecondary: '#5a678c',
+    boxShadowSecondary: '0 20px 60px rgba(24, 35, 84, 0.12)',
+    fontFamily: "'Inter', 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', sans-serif"
   }
 } as const;
 
 export default function App() {
   return (
     <ConfigProvider theme={theme}>
-      <Routes>
-        <Route element={<AppLayout />}>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-        </Route>
-      </Routes>
+      <AntdApp>
+        <Routes>
+          <Route
+            path="/login"
+            element={(
+              <PublicOnlyRoute>
+                <LoginPage />
+              </PublicOnlyRoute>
+            )}
+          />
+          <Route
+            element={(
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            )}
+          >
+            <Route element={<DashboardPage />}>
+              <Route path="/" element={<Navigate to="/episode" replace />} />
+              <Route path="/episode" element={<EpisodeCreationPage />} />
+              <Route path="/canvas" element={<InfiniteCanvasPage />} />
+            </Route>
+          </Route>
+        </Routes>
+      </AntdApp>
     </ConfigProvider>
   );
 }

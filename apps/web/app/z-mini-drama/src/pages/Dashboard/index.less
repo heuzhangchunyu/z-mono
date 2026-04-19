@@ -1,31 +1,95 @@
-.zmd-dashboard {
+.zmd-workspace {
+  display: grid;
+  height: 100%;
+  min-height: 0;
+  grid-template-columns: 168px minmax(0, 1fr);
+  column-gap: 16px;
+  width: 100%;
+}
+
+.zmd-workspace__sidebar {
+  align-self: stretch;
+}
+
+.zmd-workspace__nav {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 4px;
+  padding-top: 10px;
+  padding-right: 8px;
 }
 
-.zmd-dashboard__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px;
+.zmd-workspace__nav-item {
+  padding: 12px 18px;
+  color: #7a7a7a;
+  font-size: 18px;
+  font-weight: 500;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition:
+    background-color 180ms ease,
+    color 160ms ease;
 }
 
-.zmd-dashboard__descriptions {
-  background: #fff;
+.zmd-workspace__nav-item:hover {
+  color: #252525;
+  background: rgba(255, 255, 255, 0.58);
 }
 
-.zmd-dashboard__list {
-  margin: 0;
-  padding-left: 20px;
-  color: #475569;
+.zmd-workspace__nav-item--active {
+  color: #151515;
+  font-weight: 600;
+  background: #ffffff;
 }
 
-.zmd-dashboard__list li + li {
-  margin-top: 10px;
+.zmd-workspace__main {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+}
+
+.zmd-workspace__stage {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.78);
+  border-radius: 22px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.04);
 }
 
 @media (max-width: 960px) {
-  .zmd-dashboard__grid {
+  .zmd-workspace {
+    height: auto;
     grid-template-columns: 1fr;
+    row-gap: 10px;
+  }
+
+  .zmd-workspace__sidebar {
+    position: static;
+  }
+
+  .zmd-workspace__nav {
+    flex-direction: row;
+    gap: 8px;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 8px;
+    overflow-x: auto;
+  }
+
+  .zmd-workspace__nav-item {
+    flex: 0 0 auto;
+    padding-left: 14px;
+    padding-right: 14px;
+    font-size: 16px;
+  }
+
+  .zmd-workspace__stage {
+    height: auto;
+    min-height: 420px;
+    border-radius: 20px;
   }
 }

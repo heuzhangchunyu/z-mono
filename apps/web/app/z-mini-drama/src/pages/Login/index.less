@@ -1,0 +1,313 @@
+@import '@/styles/variables.less';
+
+.zmd-login {
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh;
+  padding: 32px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.32) 28%, transparent 50%),
+    linear-gradient(135deg, #f7f8ff 0%, #eef3ff 38%, #f8f5ff 100%);
+}
+
+.zmd-login::before,
+.zmd-login::after {
+  position: absolute;
+  inset: auto;
+  content: '';
+  pointer-events: none;
+}
+
+.zmd-login::before {
+  top: -18%;
+  left: -12%;
+  width: 72vw;
+  height: 72vw;
+  background:
+    radial-gradient(circle, rgba(103, 124, 255, 0.2), rgba(103, 124, 255, 0) 58%),
+    radial-gradient(circle at 72% 36%, rgba(121, 229, 255, 0.16), rgba(121, 229, 255, 0) 42%);
+  filter: blur(28px);
+  opacity: 0.95;
+  transform-origin: center;
+  animation: zmdLoginMeshDrift 18s ease-in-out infinite;
+}
+
+.zmd-login::after {
+  right: -16%;
+  bottom: -22%;
+  width: 58vw;
+  height: 58vw;
+  background:
+    conic-gradient(
+      from 180deg,
+      rgba(111, 106, 255, 0.16),
+      rgba(109, 213, 255, 0.04),
+      rgba(255, 188, 132, 0.2),
+      rgba(111, 106, 255, 0.16)
+    );
+  filter: blur(42px);
+  opacity: 0.82;
+  transform-origin: center;
+  animation: zmdLoginOrbit 24s ease-in-out infinite;
+}
+
+.zmd-login__bg {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(18px);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.zmd-login__bg--violet {
+  top: -120px;
+  right: -60px;
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, rgba(112, 103, 255, 0.58), rgba(112, 103, 255, 0) 68%);
+  animation: zmdLoginFloat 12s ease-in-out infinite;
+}
+
+.zmd-login__bg--cyan {
+  top: 26%;
+  left: -120px;
+  width: 360px;
+  height: 360px;
+  background: radial-gradient(circle, rgba(118, 223, 255, 0.6), rgba(118, 223, 255, 0) 70%);
+  animation: zmdLoginFloat 16s ease-in-out infinite reverse;
+}
+
+.zmd-login__bg--sunrise {
+  right: 20%;
+  bottom: -160px;
+  width: 440px;
+  height: 440px;
+  background: radial-gradient(circle, rgba(255, 177, 125, 0.48), rgba(255, 177, 125, 0) 72%);
+  animation: zmdLoginPulse 10s ease-in-out infinite;
+}
+
+.zmd-login__shell {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(360px, 460px);
+  gap: 32px;
+  align-items: stretch;
+  max-width: 1380px;
+  min-height: calc(100vh - 64px);
+  margin: 0 auto;
+}
+
+.zmd-login__hero,
+.zmd-login__panel {
+  position: relative;
+}
+
+.zmd-login__hero {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 180px 12px 40px 0;
+}
+
+.zmd-login__title.ant-typography {
+  max-width: 760px;
+  margin: 28px 0 20px;
+  color: #111938;
+  font-family: 'Baskerville', 'Times New Roman', 'Songti SC', serif;
+  font-size: clamp(3.2rem, 7vw, 6.6rem);
+  font-weight: 700;
+  line-height: 0.96;
+  letter-spacing: -0.06em;
+}
+
+.zmd-login__title span {
+  display: inline-block;
+  margin-top: 10px;
+  color: #5a61ff;
+  text-shadow: 0 10px 26px rgba(90, 97, 255, 0.15);
+}
+
+.zmd-login__panel {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.zmd-login__panel-inner {
+  width: 100%;
+  padding: 28px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(245, 247, 255, 0.72)),
+    linear-gradient(135deg, rgba(115, 111, 255, 0.18), rgba(119, 223, 255, 0.1));
+  border: 1px solid rgba(255, 255, 255, 0.84);
+  border-radius: 32px;
+  box-shadow: 0 30px 80px rgba(74, 85, 133, 0.18);
+  backdrop-filter: blur(30px);
+}
+
+.zmd-login__panel-copy {
+  margin-bottom: 20px;
+}
+
+.zmd-login__panel-copy .ant-typography {
+  margin-bottom: 0;
+}
+
+.zmd-login__panel-copy .ant-typography + .ant-typography {
+  margin-top: 10px;
+}
+
+.zmd-login__mode-switch.ant-segmented {
+  margin-bottom: 20px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.56);
+  border-radius: 16px;
+}
+
+.zmd-login__mode-switch .ant-segmented-item {
+  min-height: 42px;
+  line-height: 42px;
+  border-radius: 12px;
+}
+
+.zmd-login__mode-switch .ant-segmented-item-selected {
+  color: #283564;
+  font-weight: 700;
+}
+
+.zmd-login__panel .ant-form-item-label > label {
+  color: #384567;
+  font-weight: 600;
+}
+
+.zmd-login__panel .ant-input-affix-wrapper,
+.zmd-login__panel .ant-input {
+  height: 52px;
+  border-color: rgba(106, 116, 185, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.zmd-login__panel .ant-input-affix-wrapper:hover,
+.zmd-login__panel .ant-input-affix-wrapper-focused,
+.zmd-login__panel .ant-input:hover,
+.zmd-login__panel .ant-input:focus {
+  border-color: rgba(90, 97, 255, 0.42);
+  box-shadow: 0 0 0 3px rgba(90, 97, 255, 0.12);
+}
+
+.zmd-login__panel .ant-input-affix-wrapper .ant-input {
+  height: auto;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.zmd-login__submit.ant-btn {
+  height: 54px;
+  margin-top: 10px;
+  font-weight: 700;
+  font-size: 16px;
+  border: none;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #5a61ff 0%, #6dd5ff 100%);
+  box-shadow: 0 18px 32px rgba(90, 97, 255, 0.24);
+}
+
+.zmd-login__submit.ant-btn:hover,
+.zmd-login__submit.ant-btn:focus {
+  background: linear-gradient(135deg, #6671ff 0%, #7addff 100%);
+}
+
+@keyframes zmdLoginFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(12px, 20px, 0) scale(1.06);
+  }
+}
+
+@keyframes zmdLoginPulse {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.96;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes zmdLoginMeshDrift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+
+  35% {
+    transform: translate3d(5vw, 2vh, 0) rotate(10deg) scale(1.06);
+  }
+
+  65% {
+    transform: translate3d(2vw, 7vh, 0) rotate(-6deg) scale(0.98);
+  }
+}
+
+@keyframes zmdLoginOrbit {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+
+  50% {
+    transform: translate3d(-4vw, -5vh, 0) rotate(18deg) scale(1.08);
+  }
+}
+
+@media (max-width: 1100px) {
+  .zmd-login {
+    padding: 18px;
+  }
+
+  .zmd-login__shell {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .zmd-login__hero {
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-top: 72px;
+  }
+
+  .zmd-login__panel {
+    justify-content: stretch;
+  }
+}
+
+@media (max-width: 640px) {
+  .zmd-login__title.ant-typography {
+    font-size: 3rem;
+  }
+
+  .zmd-login__panel-inner {
+    padding: 22px;
+    border-radius: 28px;
+  }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zmd-login::before,
+  .zmd-login::after,
+  .zmd-login__bg {
+    animation: none;
+  }
+}

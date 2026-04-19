@@ -1,16 +1,16 @@
 # z-mini-drama 后端
 
-`z-mini-drama` 后端服务，使用 `Koa + TypeScript` 搭建。
+`z-mini-drama` 后端服务，使用 `Koa + koa-router + TypeScript` 搭建。
 
 目录结构参考 `examples/exmaple-mini-drama/backend`，保留以下分层思路：
 
 - `src/cmd`：服务启动入口
 - `src/internal/api`：接口与中间件
+- `src/internal/data`：迁移入口、迁移生成脚本与迁移文件
 - `src/internal/service`：业务服务
 - `src/internal/model`：领域模型与接口响应类型
 - `src/internal/config`：配置读取
-- `src/internal/database`：数据库连接与迁移执行
-- `migrations`：数据库迁移脚本
+- `src/internal/database`：数据库连接
 - `config`：配置示例
 - `docs/api`：接口文档
 
@@ -31,10 +31,31 @@ DB_PASSWORD=postgres
 DB_SSL=false
 ```
 
-服务启动时会自动执行 `migrations/` 下的迁移脚本。当前只包含迁移系统自身使用的表：
+服务启动时会按示例项目的方式执行迁移：
+
+- 源迁移文件放在 `src/internal/data/migrations/*.sql`
+- 通过 `-- mig:up/down <version> <name>` 注释声明迁移片段
+- 由 `pnpm migrations` 生成 `src/internal/data/migrations/autogen/*.sql`
+- 启动时通过 `Migrate(connStr, "autoup")` 自动执行
+
+当前迁移会涉及：
 
 - `schema_migrations`
 - `schema_ddls`
+- `users`
+
+生成迁移产物：
+
+```bash
+pnpm migrations
+```
+
+认证相关环境变量：
+
+```bash
+AUTH_JWT_SECRET=z-mini-drama-dev-secret
+AUTH_TOKEN_EXPIRE_HOURS=12
+```
 
 ## Docker 启动
 
@@ -84,3 +105,11 @@ http://127.0.0.1:4103/api/health
 ## 当前接口
 
 - `GET /api/health`
+- `POST /api/auth/login`
+- `POST /api/auth/register`
+- `GET /api/user/current`
+
+开发环境演示账号：
+
+- 用户名：`demo_admin`
+- 密码：`demo123456`
