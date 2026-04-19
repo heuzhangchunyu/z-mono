@@ -1,0 +1,16 @@
+FROM alpine:3.20
+
+WORKDIR /app
+
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories \
+  && apk --no-cache add nodejs npm \
+  && npm install -g pnpm
+
+COPY package.json ./
+COPY tsconfig.json ./
+
+ENV NODE_ENV=development
+
+EXPOSE 4102
+
+CMD ["sh", "-c", "pnpm install --no-frozen-lockfile && pnpm dev"]

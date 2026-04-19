@@ -1,0 +1,31 @@
+.zmd-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.zmd-dashboard__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.zmd-dashboard__descriptions {
+  background: #fff;
+}
+
+.zmd-dashboard__list {
+  margin: 0;
+  padding-left: 20px;
+  color: #475569;
+}
+
+.zmd-dashboard__list li + li {
+  margin-top: 10px;
+}
+
+@media (max-width: 960px) {
+  .zmd-dashboard__grid {
+    grid-template-columns: 1fr;
+  }
+}

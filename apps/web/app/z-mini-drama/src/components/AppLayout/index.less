@@ -1,0 +1,58 @@
+.zmd-layout {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(22, 119, 255, 0.12), transparent 32%),
+    linear-gradient(180deg, #f7f9fd 0%, #eef3fb 100%);
+}
+
+.zmd-layout__sider.ant-layout-sider {
+  background: rgba(255, 255, 255, 0.92);
+  border-right: 1px solid rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(18px);
+}
+
+.zmd-layout__brand {
+  padding: 24px 20px 20px;
+}
+
+.zmd-layout__brand .ant-typography {
+  margin-bottom: 0;
+}
+
+.zmd-layout__brand .ant-typography + .ant-typography {
+  margin-top: 8px;
+}
+
+.zmd-layout__main {
+  background: transparent;
+}
+
+.zmd-layout__header.ant-layout-header {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: auto;
+  padding: 24px 32px 12px;
+  background: transparent;
+  line-height: 1.4;
+}
+
+.zmd-layout__header .ant-typography {
+  margin-bottom: 0;
+}
+
+.zmd-layout__content.ant-layout-content {
+  padding: 12px 32px 32px;
+}
+
+@media (max-width: 960px) {
+  .zmd-layout__sider.ant-layout-sider {
+    display: none;
+  }
+
+  .zmd-layout__header.ant-layout-header,
+  .zmd-layout__content.ant-layout-content {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}

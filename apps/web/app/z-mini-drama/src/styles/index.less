@@ -1,0 +1,34 @@
+@import './variables.less';
+
+:root {
+  color: @text-color;
+  background-color: @background-color;
+  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-width: 320px;
+  color: @text-color;
+  background: @background-color;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}

@@ -1,0 +1,23 @@
+{
+  "name": "z-mini-drama-backend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/cmd/server.ts",
+    "build": "rm -rf dist && tsc -p tsconfig.json",
+    "start": "node dist/cmd/server.js",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@koa/cors": "^5.0.0",
+    "koa": "^2.16.1"
+  },
+  "devDependencies": {
+    "@types/koa": "^2.15.0",
+    "@types/koa__cors": "^5.0.0",
+    "@types/node": "^22.10.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
+}

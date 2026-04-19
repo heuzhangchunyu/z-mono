@@ -1,0 +1,6 @@
+{
+  "port": 4102,
+  "corsOrigin": "*",
+  "serviceName": "z-mini-drama-backend",
+  "version": "0.1.0"
+}

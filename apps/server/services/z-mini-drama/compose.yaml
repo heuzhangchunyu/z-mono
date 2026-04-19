@@ -1,0 +1,14 @@
+services:
+  z-mini-drama-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: z-mini-drama-backend
+    ports:
+      - "4102:4102"
+    environment:
+      PORT: "4102"
+      CORS_ORIGIN: "*"
+      SERVICE_NAME: "z-mini-drama-backend"
+      SERVICE_VERSION: "0.1.0"
+    restart: unless-stopped

@@ -1,0 +1,30 @@
+services:
+  z-mini-drama-backend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: z-mini-drama-backend-dev
+    working_dir: /app
+    command: sh -c "pnpm install --no-frozen-lockfile && pnpm dev"
+    ports:
+      - "4103:4102"
+    environment:
+      PORT: "4102"
+      CORS_ORIGIN: "*"
+      SERVICE_NAME: "z-mini-drama-backend-dev"
+      SERVICE_VERSION: "0.1.0-dev"
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "1000"
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+      - ./docs:/app/docs
+      - ./package.json:/app/package.json:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
+      - z-mini-drama-backend-dev-node-modules:/app/node_modules
+      - z-mini-drama-backend-dev-pnpm-store:/root/.local/share/pnpm/store
+    restart: unless-stopped
+
+volumes:
+  z-mini-drama-backend-dev-node-modules:
+  z-mini-drama-backend-dev-pnpm-store:
