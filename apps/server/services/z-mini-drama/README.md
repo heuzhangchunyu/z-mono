@@ -9,6 +9,8 @@
 - `src/internal/service`：业务服务
 - `src/internal/model`：领域模型与接口响应类型
 - `src/internal/config`：配置读取
+- `src/internal/database`：数据库连接与迁移执行
+- `migrations`：数据库迁移脚本
 - `config`：配置示例
 - `docs/api`：接口文档
 
@@ -17,6 +19,22 @@
 ```bash
 pnpm dev
 ```
+
+默认数据库使用 PostgreSQL，可通过环境变量覆盖：
+
+```bash
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_NAME=zmini_drama
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_SSL=false
+```
+
+服务启动时会自动执行 `migrations/` 下的迁移脚本。当前只包含迁移系统自身使用的表：
+
+- `schema_migrations`
+- `schema_ddls`
 
 ## Docker 启动
 
@@ -61,6 +79,7 @@ http://127.0.0.1:4103/api/health
 
 - 如果修改了 `package.json` 里的依赖，建议重新执行 `up --build`
 - 生产态 `compose.yaml` 保持不变，继续用于构建运行 `dist` 产物
+- 开发态会同时拉起 PostgreSQL，宿主机映射端口为 `5433`
 
 ## 当前接口
 

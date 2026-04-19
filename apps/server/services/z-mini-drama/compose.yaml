@@ -11,4 +11,32 @@ services:
       CORS_ORIGIN: "*"
       SERVICE_NAME: "z-mini-drama-backend"
       SERVICE_VERSION: "0.1.0"
+      DB_HOST: "postgres"
+      DB_PORT: "5432"
+      DB_NAME: "zmini_drama"
+      DB_USER: "postgres"
+      DB_PASSWORD: "postgres"
+      DB_SSL: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
+  postgres:
+    image: postgres:16-alpine
+    container_name: z-mini-drama-postgres
+    environment:
+      POSTGRES_DB: "zmini_drama"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+    ports:
+      - "5432:5432"
+    volumes:
+      - z-mini-drama-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d zmini_drama"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  z-mini-drama-postgres-data:

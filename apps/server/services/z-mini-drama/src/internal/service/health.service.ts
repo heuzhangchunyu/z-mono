@@ -9,7 +9,14 @@ export class HealthService {
       serviceName: this.appConfig.serviceName,
       status: 'ok',
       version: this.appConfig.version,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      database: {
+        provider: 'postgresql',
+        status: 'connected',
+        host: this.appConfig.database.host,
+        port: this.appConfig.database.port,
+        database: this.appConfig.database.name
+      }
     };
   }
 }

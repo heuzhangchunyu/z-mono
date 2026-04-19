@@ -20,7 +20,14 @@
     "serviceName": "z-mini-drama-backend",
     "status": "ok",
     "version": "0.1.0",
-    "timestamp": "2026-04-19T12:00:00.000Z"
+    "timestamp": "2026-04-19T12:00:00.000Z",
+    "database": {
+      "provider": "postgresql",
+      "status": "connected",
+      "host": "postgres",
+      "port": 5432,
+      "database": "zmini_drama"
+    }
   }
 }
 ```
@@ -33,6 +40,11 @@
 - `data.status`：服务状态
 - `data.version`：服务版本
 - `data.timestamp`：服务端生成时间
+- `data.database.provider`：数据库类型，当前为 `postgresql`
+- `data.database.status`：数据库连接状态
+- `data.database.host`：数据库主机
+- `data.database.port`：数据库端口
+- `data.database.database`：数据库名
 
 ## 失败场景
 

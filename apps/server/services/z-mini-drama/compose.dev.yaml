@@ -13,9 +13,19 @@ services:
       CORS_ORIGIN: "*"
       SERVICE_NAME: "z-mini-drama-backend-dev"
       SERVICE_VERSION: "0.1.0-dev"
+      DB_HOST: "postgres-dev"
+      DB_PORT: "5432"
+      DB_NAME: "zmini_drama_dev"
+      DB_USER: "postgres"
+      DB_PASSWORD: "postgres"
+      DB_SSL: "false"
       CHOKIDAR_USEPOLLING: "true"
       CHOKIDAR_INTERVAL: "1000"
+    depends_on:
+      postgres-dev:
+        condition: service_healthy
     volumes:
+      - ./migrations:/app/migrations
       - ./src:/app/src
       - ./config:/app/config
       - ./docs:/app/docs
@@ -24,7 +34,24 @@ services:
       - z-mini-drama-backend-dev-node-modules:/app/node_modules
       - z-mini-drama-backend-dev-pnpm-store:/root/.local/share/pnpm/store
     restart: unless-stopped
+  postgres-dev:
+    image: postgres:16-alpine
+    container_name: z-mini-drama-postgres-dev
+    environment:
+      POSTGRES_DB: "zmini_drama_dev"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+    ports:
+      - "5433:5432"
+    volumes:
+      - z-mini-drama-backend-dev-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d zmini_drama_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
 volumes:
   z-mini-drama-backend-dev-node-modules:
   z-mini-drama-backend-dev-pnpm-store:
+  z-mini-drama-backend-dev-postgres-data:

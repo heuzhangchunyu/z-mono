@@ -9,6 +9,7 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 COPY package.json ./
 COPY tsconfig.json ./
 COPY src ./src
+COPY migrations ./migrations
 COPY config ./config
 COPY docs ./docs
 

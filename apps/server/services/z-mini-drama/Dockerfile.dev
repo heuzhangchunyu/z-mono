@@ -8,6 +8,7 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
 COPY package.json ./
 COPY tsconfig.json ./
+COPY migrations ./migrations
 
 ENV NODE_ENV=development
 
