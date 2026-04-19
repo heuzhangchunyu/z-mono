@@ -8,6 +8,10 @@ interface AuthPayload {
 
 interface AuthResponse {
   message?: string;
+  data?: {
+    userId: number;
+    username: string;
+  };
 }
 
 const authPathMap: Record<AuthMode, string> = {

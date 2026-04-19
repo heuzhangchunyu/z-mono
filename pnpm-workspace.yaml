@@ -2,3 +2,4 @@ packages:
   - apps/server/services/*
   - apps/web/app/*
   - apps/web/packages/*
+  - apps/web/aimodels-main

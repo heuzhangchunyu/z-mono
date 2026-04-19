@@ -89,6 +89,7 @@ export default function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
         setMessage(result.message ?? currentCopy.success);
         onAuthSuccess?.({
           mode,
+          userId: result.data?.userId ?? 0,
           username: trimmedUsername
         });
       }

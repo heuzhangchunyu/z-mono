@@ -4,6 +4,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import AuthHero from './components/AuthHero/AuthHero';
 import AuthPanel from './components/AuthPanel/AuthPanel';
 import HomeShell from './components/HomeShell/HomeShell';
+import { PushChannelProvider } from './contexts/PushChannelContext';
 import type { AuthSuccessPayload } from './types/auth';
 
 const theme = {
@@ -19,23 +20,28 @@ const theme = {
 } as const;
 
 export default function App() {
-  const [authenticatedUser, setAuthenticatedUser] = useState<string | null>(null);
+  const [authenticatedUser, setAuthenticatedUser] = useState<{ userId: number; username: string } | null>(null);
 
-  const handleAuthSuccess = ({ mode, username }: AuthSuccessPayload) => {
+  const handleAuthSuccess = ({ mode, userId, username }: AuthSuccessPayload) => {
     if (mode === 'login') {
-      setAuthenticatedUser(username);
+      setAuthenticatedUser({
+        userId,
+        username
+      });
     }
   };
 
   if (authenticatedUser) {
     return (
       <ConfigProvider theme={theme}>
-        <Routes>
-          <Route path="/" element={<Navigate to="/creation" replace />} />
-          <Route path="/creation/*" element={<HomeShell username={authenticatedUser} />} />
-          <Route path="/canvas/*" element={<HomeShell username={authenticatedUser} />} />
-          <Route path="*" element={<Navigate to="/creation" replace />} />
-        </Routes>
+        <PushChannelProvider enabled={Boolean(authenticatedUser.userId)}>
+          <Routes>
+            <Route path="/" element={<Navigate to="/creation" replace />} />
+            <Route path="/creation/*" element={<HomeShell username={authenticatedUser.username} />} />
+            <Route path="/canvas/*" element={<HomeShell username={authenticatedUser.username} />} />
+            <Route path="*" element={<Navigate to="/creation" replace />} />
+          </Routes>
+        </PushChannelProvider>
       </ConfigProvider>
     );
   }

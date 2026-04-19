@@ -15,5 +15,6 @@ export interface AuthCopy {
 
 export interface AuthSuccessPayload {
   mode: AuthMode;
+  userId: number;
   username: string;
 }

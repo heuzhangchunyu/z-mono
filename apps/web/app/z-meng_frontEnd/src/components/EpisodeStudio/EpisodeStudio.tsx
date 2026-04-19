@@ -15,6 +15,7 @@ import {
   updateEpisodeScript,
   updateEpisodeStage
 } from '../../services/episode/episode';
+import { usePushChannel } from '../../contexts/PushChannelContext';
 import './EpisodeStudio.less';
 
 type EpisodeStageKey = 'script' | 'subject' | 'keyframes' | 'video-production';
@@ -567,6 +568,7 @@ function SubjectCreationModal({ subjectItem, onClose }: SubjectCreationModalProp
   const [generatingImage, setGeneratingImage] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
   const messageListRef = useRef<HTMLDivElement | null>(null);
+  const { lastEvent } = usePushChannel();
 
   useEffect(() => {
     setPromptDraft('');
@@ -592,6 +594,21 @@ function SubjectCreationModal({ subjectItem, onClose }: SubjectCreationModalProp
 
     return () => window.clearInterval(timer);
   }, [subjectItem, imageFeed?.status]);
+
+  useEffect(() => {
+    if (!subjectItem || !lastEvent) {
+      return;
+    }
+
+    if (
+      !['subject.image.processing', 'subject.image.success', 'subject.image.failed'].includes(lastEvent.eventType)
+      || lastEvent.message.subjectItemId !== subjectItem.id
+    ) {
+      return;
+    }
+
+    void loadImageFeed(subjectItem.id, true);
+  }, [lastEvent, subjectItem]);
 
   useEffect(() => {
     if (!subjectItem) {
